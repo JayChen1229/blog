@@ -1,0 +1,25 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Giscus from '../components/Giscus.astro';
+
+const { frontmatter } = Astro.props;
+---
+
+<BaseLayout title={frontmatter.title} description={frontmatter.description}>
+  <article class="prose prose-lg dark:prose-invert max-w-none">
+    <div class="mb-8 border-b border-gray-100 dark:border-gray-800 pb-8">
+      <h1 class="mb-2 !text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+        {frontmatter.title}
+      </h1>
+      <div class="text-gray-500 dark:text-gray-400">
+        <time datetime={frontmatter.pubDate}>{new Date(frontmatter.pubDate).toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+      </div>
+    </div>
+    
+    <slot />
+  </article>
+
+  <div class="mt-16 pt-8 border-t border-gray-100 dark:border-gray-800">
+    <Giscus />
+  </div>
+</BaseLayout>

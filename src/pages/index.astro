@@ -1,0 +1,56 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog'))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3); // Latest 3 posts
+---
+
+<BaseLayout title="首頁 | 個人部落格">
+  <section class="mb-16">
+    <h1 class="text-4xl font-extrabold mb-6 text-gray-900 dark:text-gray-100">你好，我是 Jay 👋</h1>
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+      這裡是用於分享技術、思考與生活的地方。
+      <br />
+      這個部落格使用了 Astro、Tailwind CSS 和 MDX 構建。
+    </p>
+    <div class="flex gap-4">
+      <a href="/blog" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+        閱讀文章
+      </a>
+      <a href="/about" class="inline-flex items-center justify-center px-5 py-3 border border-gray-300 dark:border-gray-700 text-base font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        關於我
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">最新文章</h2>
+    <div class="grid gap-8">
+      {
+        posts.map((post) => (
+          <article class="p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow">
+            <a href={`/blog/${post.slug}/`} class="block group">
+              <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                {post.data.title}
+              </h3>
+              <p class="mt-2 text-gray-600 dark:text-gray-400 line-clamp-2">
+                {post.data.description}
+              </p>
+              <div class="mt-4 text-sm text-gray-500">
+                <time datetime={post.data.pubDate.toISOString()}>
+                  {post.data.pubDate.toLocaleDateString('zh-TW', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </time>
+              </div>
+            </a>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>
