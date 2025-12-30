@@ -406,13 +406,20 @@ body {
 
 /* Responsive Typography - Smaller fonts on mobile */
 @media (max-width: 640px) {
+
+    /* Global base font size for mobile */
+    body {
+        font-size: 0.875rem;
+    }
+
     .prose {
-        font-size: 0.9rem;
+        font-size: 0.875rem;
+        line-height: 1.8;
     }
 
     .prose p {
-        font-size: 0.9rem;
-        line-height: 1.5;
+        font-size: 0.875rem;
+        line-height: 1.8;
     }
 
     .prose h1 {
@@ -428,14 +435,47 @@ body {
     }
 
     .prose li {
-        font-size: 0.9rem;
+        font-size: 0.875rem;
+        line-height: 1.8;
     }
 
     .prose pre {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
 
     .prose code {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+    }
+
+    /* Global text elements on mobile */
+    h1,
+    h2,
+    h3,
+    h4 {
+        line-height: 1.4;
+    }
+
+    p,
+    li,
+    span,
+    div {
+        line-height: 1.8;
+    }
+
+    /* Specific component adjustments */
+    .text-lg {
+        font-size: 0.95rem !important;
+    }
+
+    .text-xl {
+        font-size: 1.1rem !important;
+    }
+
+    .text-2xl {
+        font-size: 1.25rem !important;
+    }
+
+    .text-3xl {
+        font-size: 1.5rem !important;
     }
 }
