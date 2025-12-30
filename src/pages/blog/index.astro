@@ -7,24 +7,25 @@ const posts = (await getCollection("blog")).sort(
 );
 ---
 
-<BaseLayout title="文章列表 | 個人部落格">
+<BaseLayout title="文章列表 | The Samo Log (薩摩日誌)">
 	<section>
-		<h1 class="text-3xl font-bold mb-8 text-gray-900 dark:text-gray-100">
-			文章列表
-		</h1>
-		<div class="grid gap-8 md:grid-cols-1">
+		<div class="mb-10">
+			<h1 class="text-3xl font-bold text-gray-100 mb-2">
+				<span class="text-gradient">文章</span>列表
+			</h1>
+			<p class="text-gray-400">探索所有技術分享與生活記錄</p>
+		</div>
+
+		<div class="grid gap-6 md:grid-cols-1">
 			{
-				posts.map((post) => (
-					<article class="p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-800 transition-all duration-300 group">
+				posts.map((post, index) => (
+					<article
+						class="card-gradient-border group p-6 transition-all duration-500 hover:-translate-y-1"
+						style={`animation-delay: ${index * 50}ms`}
+					>
 						<a href={`/blog/${post.slug}/`} class="block">
-							<h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-								{post.data.title}
-							</h2>
-							<p class="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 leading-relaxed">
-								{post.data.description}
-							</p>
-							<div class="flex items-center justify-between mt-4">
-								<div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+							<div class="flex items-center justify-between mb-4">
+								<div class="flex items-center gap-4 text-sm text-gray-400">
 									<time
 										datetime={post.data.pubDate.toISOString()}
 									>
@@ -43,12 +44,34 @@ const posts = (await getCollection("blog")).sort(
 										{post.data.tags
 											.slice(0, 3)
 											.map((tag: string) => (
-												<span class="px-2.5 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-medium rounded-full">
+												<span class="tag-glow px-2.5 py-0.5 text-xs font-medium rounded-full text-blue-300">
 													#{tag}
 												</span>
 											))}
 									</div>
 								)}
+							</div>
+							<h2 class="text-2xl font-bold text-gray-100 mb-3 group-hover:text-blue-400 transition-colors duration-300">
+								{post.data.title}
+							</h2>
+							<p class="text-gray-400 mb-4 line-clamp-2 leading-relaxed">
+								{post.data.description}
+							</p>
+							<div class="inline-flex items-center text-blue-400 font-medium text-sm group-hover:text-blue-300 transition-colors">
+								閱讀更多
+								<svg
+									class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M9 5l7 7-7 7"
+									/>
+								</svg>
 							</div>
 						</a>
 					</article>

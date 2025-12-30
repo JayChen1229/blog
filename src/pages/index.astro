@@ -7,55 +7,102 @@ const posts = (await getCollection('blog'))
   .slice(0, 3); // Latest 3 posts
 ---
 
-<BaseLayout title="首頁 | 個人部落格">
-  <section class="py-20 sm:py-32">
-    <div class="max-w-2xl">
-      <h1 class="text-4xl sm:text-6xl font-extrabold mb-6 text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
-        你好，我是 Jay <span class="inline-block animate-bounce">👋</span>
+<BaseLayout title="首頁 | The Samo Log (薩摩日誌)">
+  <!-- Hero Section with Floating Particles -->
+  <section class="relative py-20 sm:py-32 overflow-hidden">
+    <!-- Floating Particles - 12 particles for more visual interest -->
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="particle particle-1"></div>
+      <div class="particle particle-2"></div>
+      <div class="particle particle-3"></div>
+      <div class="particle particle-4"></div>
+      <div class="particle particle-5"></div>
+      <div class="particle particle-6"></div>
+      <div class="particle particle-7"></div>
+      <div class="particle particle-8"></div>
+      <div class="particle particle-9"></div>
+      <div class="particle particle-10"></div>
+      <div class="particle particle-11"></div>
+      <div class="particle particle-12"></div>
+    </div>
+    
+    <div class="relative max-w-2xl">
+      <h1 class="text-4xl sm:text-6xl font-extrabold mb-6 tracking-tight leading-tight">
+        <span class="text-gray-100">你好，我是</span>
+        <span class="text-gradient"> Jay</span>
+        <span class="inline-block animate-bounce ml-2">👋</span>
       </h1>
-      <p class="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed max-w-lg">
+      <p class="text-lg sm:text-xl text-gray-400 mb-8 leading-relaxed max-w-lg">
+        歡迎來到 <span class="text-gray-200 font-medium">The Samo Log</span>，
         這裡是用於分享技術、思考與生活的地方。
         致力於打造極致的閱讀體驗。
       </p>
-      <div class="flex gap-4">
-        <a href="/blog" class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-0.5">
+      <div class="flex flex-wrap gap-4">
+        <a 
+          href="/blog" 
+          class="px-6 py-3 text-base font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-500 shadow-md hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300"
+        >
           開始閱讀
         </a>
-        <a href="/about" class="inline-flex items-center justify-center px-6 py-3 border border-gray-200 dark:border-gray-700 text-base font-semibold rounded-lg text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md transition-all duration-300">
+        <a 
+          href="/about" 
+          class="px-6 py-3 text-base font-semibold rounded-lg text-gray-300 bg-gray-800 border border-gray-700 hover:bg-gray-700 hover:border-gray-600 hover:text-white transition-all duration-300"
+        >
           關於我
         </a>
       </div>
     </div>
   </section>
 
-  <section class="py-12 border-t border-gray-100 dark:border-gray-800">
-    <div class="flex items-baseline justify-between mb-8">
-      <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">最新文章</h2>
-      <a href="/blog" class="text-indigo-600 hover:text-indigo-700 font-medium text-sm">瀏覽所有 &rarr;</a>
+  <!-- Latest Posts Section -->
+  <section class="py-12 border-t border-gray-800/50">
+    <div class="flex items-baseline justify-between mb-10">
+      <h2 class="text-2xl font-bold text-gray-100">
+        <span class="text-gradient">最新</span>文章
+      </h2>
+      <a href="/blog" class="text-blue-400 hover:text-blue-300 font-medium text-sm transition-colors">
+        瀏覽所有 &rarr;
+      </a>
     </div>
     
-    <div class="grid gap-8 sm:grid-cols-1">
+    <div class="grid gap-6 sm:grid-cols-1">
       {
-        posts.map((post) => (
-          <article class="group relative bg-white dark:bg-gray-900 rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 border border-gray-100 dark:border-gray-800 transition-all duration-300 hover:-translate-y-1">
+        posts.map((post, index) => (
+          <article 
+            class="card-gradient-border group p-6 sm:p-8 transition-all duration-500 hover:-translate-y-1"
+            style={`animation-delay: ${index * 100}ms`}
+          >
             <a href={`/blog/${post.slug}/`} class="block focus:outline-none">
-              <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mb-3">
-                <time datetime={post.data.pubDate.toISOString()} class="font-medium text-xs uppercase tracking-wider">
+              <div class="flex items-center gap-3 text-sm text-gray-500 mb-4">
+                <time datetime={post.data.pubDate.toISOString()} class="font-medium text-xs uppercase tracking-wider text-gray-400">
                   {post.data.pubDate.toLocaleDateString('zh-TW', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
                   })}
                 </time>
+                {post.data.tags && post.data.tags.length > 0 && (
+                  <span class="text-gray-600">•</span>
+                  <div class="flex gap-2">
+                    {post.data.tags.slice(0, 2).map((tag: string) => (
+                      <span class="tag-glow px-2 py-0.5 text-xs font-medium rounded-full text-blue-300">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-              <h3 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              <h3 class="text-xl sm:text-2xl font-bold text-gray-100 mb-3 group-hover:text-blue-400 transition-colors duration-300">
                 {post.data.title}
               </h3>
-              <p class="text-gray-600 dark:text-gray-400 leading-relaxed mb-4 line-clamp-2">
+              <p class="text-gray-400 leading-relaxed mb-4 line-clamp-2">
                 {post.data.description}
               </p>
-              <div class="inline-flex items-center text-indigo-600 dark:text-indigo-400 font-medium text-sm group-hover:underline">
+              <div class="inline-flex items-center text-blue-400 font-medium text-sm group-hover:text-blue-300 transition-colors">
                 閱讀更多
+                <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             </a>
           </article>

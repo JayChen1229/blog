@@ -1,19 +1,95 @@
 ---
----
-<div class="giscus mt-12 w-full"></div>
 
-<script src="https://giscus.app/client.js"
-        data-repo="JayChen1229/blog"
-        data-repo-id="R_kgDOQwacDQ"
-        data-category="Announcements"
-        data-category-id="DIC_kwDOQwacDc4C0V4i"
-        data-mapping="pathname"
-        data-strict="0"
-        data-reactions-enabled="1"
-        data-emit-metadata="0"
-        data-input-position="bottom"
-        data-theme="preferred_color_scheme"
-        data-lang="zh-TW"
-        crossorigin="anonymous"
-        async>
+---
+
+<!-- Giscus 留言區容器 -->
+<div id="giscus-container" class="giscus mt-12 w-full min-h-[200px]">
+        <div
+                id="giscus-placeholder"
+                class="flex items-center justify-center py-12 text-gray-500"
+        >
+                <svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                        <circle
+                                class="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                stroke-width="4"
+                                fill="none"></circle>
+                        <path
+                                class="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                </svg>
+                載入留言中...
+        </div>
+</div>
+
+<script>
+        function loadGiscus() {
+                const container = document.getElementById("giscus-container");
+                const placeholder =
+                        document.getElementById("giscus-placeholder");
+
+                if (!container || container.querySelector("iframe")) return;
+
+                // Remove placeholder
+                if (placeholder) placeholder.remove();
+
+                // Create and insert script
+                const script = document.createElement("script");
+                script.src = "https://giscus.app/client.js";
+                script.setAttribute("data-repo", "JayChen1229/blog");
+                script.setAttribute("data-repo-id", "R_kgDOQwacDQ");
+                script.setAttribute("data-category", "Announcements");
+                script.setAttribute("data-category-id", "DIC_kwDOQwacDc4C0V4i");
+                script.setAttribute("data-mapping", "pathname");
+                script.setAttribute("data-strict", "0");
+                script.setAttribute("data-reactions-enabled", "1");
+                script.setAttribute("data-emit-metadata", "0");
+                script.setAttribute("data-input-position", "bottom");
+                script.setAttribute("data-theme", "dark");
+                script.setAttribute("data-lang", "zh-TW");
+                script.setAttribute("crossorigin", "anonymous");
+                script.async = true;
+
+                container.appendChild(script);
+        }
+
+        // Use Intersection Observer for lazy loading
+        function setupGiscusLazyLoad() {
+                const container = document.getElementById("giscus-container");
+                if (!container) return;
+
+                const observer = new IntersectionObserver(
+                        (entries) => {
+                                entries.forEach((entry) => {
+                                        if (entry.isIntersecting) {
+                                                loadGiscus();
+                                                observer.disconnect();
+                                        }
+                                });
+                        },
+                        {
+                                rootMargin: "100px", // Load when 100px before becoming visible
+                        },
+                );
+
+                observer.observe(container);
+        }
+
+        // Initialize
+        if (document.readyState === "loading") {
+                document.addEventListener(
+                        "DOMContentLoaded",
+                        setupGiscusLazyLoad,
+                );
+        } else {
+                setupGiscusLazyLoad();
+        }
+
+        // Handle Astro page transitions
+        document.addEventListener("astro:after-swap", setupGiscusLazyLoad);
 </script>

@@ -1,12 +1,14 @@
 ---
-import { getCollection } from "astro:content";
-
-const allPosts = await getCollection("blog");
-const currentPath = Astro.url.pathname;
+// Accept posts as prop to avoid duplicate getCollection call
+interface Props {
+    posts: any[];
+    currentSlug: string;
+}
+const { posts, currentSlug } = Astro.props;
 
 // Filter out current post
-const availablePosts = allPosts
-    .filter((post) => !currentPath.includes(post.slug))
+const availablePosts = posts
+    .filter((post) => post.slug !== currentSlug)
     .map((post) => ({
         title: post.data.title,
         href: `/blog/${post.slug}/`,
@@ -22,12 +24,10 @@ const availablePosts = allPosts
 
 <div class="my-16">
     <div class="flex items-center justify-between mb-8">
-        <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            也看看我的其他文章
-        </h3>
+        <h3 class="text-2xl font-bold text-gray-100">也看看我的其他文章</h3>
         <button
             id="refresh-posts"
-            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
         >
             <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -68,9 +68,9 @@ const availablePosts = allPosts
             .map(
                 (post) => `
             <a href="${post.href}" class="block group">
-                <div class="flex items-baseline justify-between py-2 border-b border-dashed border-gray-200 dark:border-gray-800">
-                    <span class="text-sm text-gray-500 dark:text-gray-400 font-mono tracking-wider mr-4">${post.date}</span>
-                    <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 group-hover:underline underline-offset-4 decoration-indigo-500 decoration-2 transition-all flex-1 text-right">
+                <div class="flex items-baseline justify-between py-2 border-b border-dashed border-gray-800">
+                    <span class="text-sm text-gray-400 font-mono tracking-wider mr-4">${post.date}</span>
+                    <h4 class="text-lg font-medium text-gray-100 group-hover:underline underline-offset-4 decoration-blue-500 decoration-2 transition-all flex-1 text-right">
                         ${post.title}
                     </h4>
                 </div>

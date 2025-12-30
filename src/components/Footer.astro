@@ -1,11 +1,30 @@
 ---
 const today = new Date();
 ---
-<footer class="w-full px-6 py-12 mt-auto text-center border-t border-gray-200/50 dark:border-gray-800/50">
-  <div class="text-gray-500 dark:text-gray-400 text-sm font-medium">
-    &copy; {today.getFullYear()} 個人部落格. All rights reserved.
+
+<footer class="w-full px-6 py-12 mt-auto text-center relative">
+  <!-- Gradient top border - Blue -->
+  <div
+    class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"
+  >
   </div>
-  <div class="mt-4 text-xs text-gray-400 dark:text-gray-500">
-    Designed with <a href="https://astro.build" target="_blank" class="hover:text-indigo-500 transition-colors">Astro</a> & <a href="https://tailwindcss.com" target="_blank" class="hover:text-indigo-500 transition-colors">Tailwind CSS</a>
+
+  <div class="text-gray-400 text-sm font-medium mb-2">
+    &copy; {today.getFullYear()}
+    <span class="text-gray-300">The Samo Log</span> (薩摩日誌)
+  </div>
+  <div class="text-xs text-gray-500">
+    Designed with
+    <a
+      href="https://astro.build"
+      target="_blank"
+      class="hover:text-blue-400 transition-colors duration-300">Astro</a
+    >
+    &
+    <a
+      href="https://tailwindcss.com"
+      target="_blank"
+      class="hover:text-blue-400 transition-colors duration-300">Tailwind CSS</a
+    >
   </div>
 </footer>
