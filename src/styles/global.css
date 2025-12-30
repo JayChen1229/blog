@@ -455,11 +455,16 @@ body {
         line-height: 1.4;
     }
 
+    /* Apply line-height to text elements but exclude calendar */
     p,
-    li,
-    span,
-    div {
+    li {
         line-height: 1.8;
+    }
+
+    /* Reset line-height for calendar grid */
+    #calendar-container,
+    #calendar-container * {
+        line-height: normal;
     }
 
     /* Specific component adjustments */
