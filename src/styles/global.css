@@ -403,3 +403,39 @@ body {
     margin-top: 1em;
     margin-bottom: 1em;
 }
+
+/* Responsive Typography - Smaller fonts on mobile */
+@media (max-width: 640px) {
+    .prose {
+        font-size: 0.9rem;
+    }
+
+    .prose p {
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .prose h1 {
+        font-size: 1.5rem;
+    }
+
+    .prose h2 {
+        font-size: 1.25rem;
+    }
+
+    .prose h3 {
+        font-size: 1.1rem;
+    }
+
+    .prose li {
+        font-size: 0.9rem;
+    }
+
+    .prose pre {
+        font-size: 0.8rem;
+    }
+
+    .prose code {
+        font-size: 0.85rem;
+    }
+}
