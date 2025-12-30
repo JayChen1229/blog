@@ -1,0 +1,95 @@
+---
+import { getCollection } from "astro:content";
+
+const allPosts = await getCollection("blog");
+const currentPath = Astro.url.pathname;
+
+// Filter out current post
+const availablePosts = allPosts
+    .filter((post) => !currentPath.includes(post.slug))
+    .map((post) => ({
+        title: post.data.title,
+        href: `/blog/${post.slug}/`,
+        date: post.data.pubDate
+            .toLocaleDateString("zh-TW", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+            })
+            .replace(/\//g, "·"),
+    }));
+---
+
+<div class="my-16">
+    <div class="flex items-center justify-between mb-8">
+        <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            也看看我的其他文章
+        </h3>
+        <button
+            id="refresh-posts"
+            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                ></path>
+            </svg>
+            換一批
+        </button>
+    </div>
+
+    <div id="posts-container" class="space-y-6">
+        <!-- Posts will be injected here -->
+    </div>
+</div>
+
+<script is:inline define:vars={{ availablePosts }}>
+    function getRandomPosts(posts, count) {
+        const shuffled = [...posts].sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, count);
+    }
+
+    function renderPosts() {
+        const container = document.getElementById("posts-container");
+        if (!container) return;
+
+        const randomPosts = getRandomPosts(availablePosts, 3);
+
+        container.innerHTML = randomPosts
+            .map(
+                (post) => `
+            <a href="${post.href}" class="block group">
+                <div class="flex items-baseline justify-between py-2 border-b border-dashed border-gray-200 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400 font-mono tracking-wider mr-4">${post.date}</span>
+                    <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 group-hover:underline underline-offset-4 decoration-indigo-500 decoration-2 transition-all flex-1 text-right">
+                        ${post.title}
+                    </h4>
+                </div>
+            </a>
+        `,
+            )
+            .join("");
+    }
+
+    // Initial render
+    renderPosts();
+
+    // Event listener
+    document.getElementById("refresh-posts")?.addEventListener("click", () => {
+        const btn = document.getElementById("refresh-posts");
+        if (btn) {
+            btn.classList.add("animate-spin");
+            setTimeout(() => btn.classList.remove("animate-spin"), 500);
+        }
+        renderPosts();
+    });
+</script>

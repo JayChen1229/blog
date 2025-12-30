@@ -1,0 +1,181 @@
+---
+import { getCollection } from "astro:content";
+// Fetch posts directly in the component
+const posts = await getCollection("blog");
+
+// Helper to generate the last 365 days
+const today = new Date();
+const oneYearAgo = new Date(today);
+oneYearAgo.setFullYear(today.getFullYear() - 1);
+
+const days: Date[] = [];
+for (let d = new Date(oneYearAgo); d <= today; d.setDate(d.getDate() + 1)) {
+    days.push(new Date(d));
+}
+
+// Map post dates to frequency and titles
+interface PostInfo {
+    count: number;
+    titles: string[];
+}
+const postData: Record<string, PostInfo> = posts.reduce(
+    (acc: Record<string, PostInfo>, post: any) => {
+        const dateStr = post.data.pubDate.toISOString().split("T")[0];
+        if (!acc[dateStr]) {
+            acc[dateStr] = { count: 0, titles: [] };
+        }
+        acc[dateStr].count += 1;
+        acc[dateStr].titles.push(post.data.title);
+        return acc;
+    },
+    {},
+);
+
+// Helper to get color intensity
+function getColor(count: number) {
+    if (count === 0) return "bg-gray-100 dark:bg-gray-800";
+    if (count === 1) return "bg-indigo-300 dark:bg-indigo-700";
+    if (count > 1) return "bg-indigo-500 dark:bg-indigo-500";
+    return "bg-gray-100 dark:bg-gray-800";
+}
+---
+
+<div class="my-16 flex justify-center relative" id="calendar-container">
+    <div class="w-full max-w-2xl overflow-x-auto pb-4">
+        <div class="min-w-[600px] flex flex-col items-center">
+            <h3
+                class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-6 text-center tracking-wide"
+            >
+                寫作日曆
+            </h3>
+            <div class="grid grid-cols-[auto_1fr] gap-2">
+                <div
+                    class="grid grid-rows-7 gap-1 text-[10px] text-gray-400 dark:text-gray-500 text-right pr-2 leading-[10px] pt-[2px]"
+                >
+                    <span></span>
+                    <span>Mon</span>
+                    <span></span>
+                    <span>Wed</span>
+                    <span></span>
+                    <span>Fri</span>
+                    <span></span>
+                </div>
+                <div
+                    class="grid grid-flow-col gap-1 grid-rows-7"
+                    id="calendar-grid"
+                >
+                    {
+                        days.map((day) => {
+                            const dateStr = day.toISOString().split("T")[0];
+                            const info = postData[dateStr] || {
+                                count: 0,
+                                titles: [],
+                            };
+                            const dateDisplay = day.toLocaleDateString(
+                                "zh-TW",
+                                {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                },
+                            );
+                            return (
+                                <div
+                                    class={`w-2.5 h-2.5 rounded-[2px] calendar-cell ${getColor(info.count)} ${info.count > 0 ? "cursor-pointer" : ""}`}
+                                    data-date={dateDisplay}
+                                    data-titles={JSON.stringify(info.titles)}
+                                    data-count={info.count}
+                                />
+                            );
+                        })
+                    }
+                </div>
+            </div>
+            <div
+                class="flex items-center justify-end w-full max-w-[500px] gap-2 mt-4 text-[10px] text-gray-500"
+            >
+                <span>Less</span>
+                <div
+                    class="w-2.5 h-2.5 rounded-[2px] bg-gray-100 dark:bg-gray-800"
+                >
+                </div>
+                <div
+                    class="w-2.5 h-2.5 rounded-[2px] bg-indigo-300 dark:bg-indigo-700"
+                >
+                </div>
+                <div
+                    class="w-2.5 h-2.5 rounded-[2px] bg-indigo-500 dark:bg-indigo-500"
+                >
+                </div>
+                <span>More</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div
+        id="calendar-tooltip"
+        class="absolute hidden z-50 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 px-4 py-3 pointer-events-none min-w-[200px] max-w-[300px]"
+        style="transform: translate(-50%, -100%); margin-top: -12px;"
+    >
+        <div
+            id="tooltip-date"
+            class="text-xs text-gray-500 dark:text-gray-400 mb-1"
+        >
+        </div>
+        <div
+            id="tooltip-titles"
+            class="text-indigo-600 dark:text-indigo-400 font-bold text-sm"
+        >
+        </div>
+    </div>
+</div>
+
+<script is:inline>
+    (function () {
+        const container = document.getElementById("calendar-container");
+        const tooltip = document.getElementById("calendar-tooltip");
+        const dateEl = document.getElementById("tooltip-date");
+        const titlesEl = document.getElementById("tooltip-titles");
+
+        if (!container || !tooltip) return;
+
+        const cells = container.querySelectorAll(".calendar-cell");
+
+        cells.forEach((cell) => {
+            const count = parseInt(cell.getAttribute("data-count") || "0");
+            if (count === 0) return;
+
+            cell.addEventListener("mouseenter", (e) => {
+                const target = e.target;
+                const date = target.getAttribute("data-date");
+                const titles = JSON.parse(
+                    target.getAttribute("data-titles") || "[]",
+                );
+
+                if (dateEl) dateEl.textContent = date;
+                if (titlesEl) {
+                    titlesEl.innerHTML = titles
+                        .map((t) => `<div class="truncate">${t}</div>`)
+                        .join("");
+                }
+
+                tooltip.classList.remove("hidden");
+
+                // Position tooltip
+                const rect = target.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+
+                const left = rect.left - containerRect.left + rect.width / 2;
+                const top = rect.top - containerRect.top;
+
+                tooltip.style.left = left + "px";
+                tooltip.style.top = top + "px";
+            });
+
+            cell.addEventListener("mouseleave", () => {
+                tooltip.classList.add("hidden");
+            });
+        });
+    })();
+</script>

@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Enable class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
     --font-sans: 'Inter', sans-serif;
     --color-gray-50: #f9fafb;
@@ -42,4 +45,8 @@
 /* Smooth Scrolling */
 html {
     scroll-behavior: smooth;
+}
+
+body {
+    @apply transition-colors duration-300;
 }

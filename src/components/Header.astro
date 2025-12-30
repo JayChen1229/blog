@@ -1,17 +1,44 @@
 ---
+import ThemeToggle from "./ThemeToggle.astro";
 ---
+
 <header class="glass-nav w-full px-6 py-4 flex justify-between items-center">
-  <a href="/" class="text-xl font-bold text-gray-900 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors tracking-tight">
+  <a
+    href="/"
+    class="text-xl font-bold text-gray-900 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors tracking-tight"
+  >
     個人部落格
   </a>
-  <nav class="flex gap-6">
-    <a href="/blog" class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors relative group">
+  <nav class="flex gap-6 items-center">
+    <a
+      href="/blog"
+      class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors relative group"
+    >
       文章列表
-      <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all group-hover:w-full"></span>
+      <span
+        class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all group-hover:w-full"
+      ></span>
     </a>
-    <a href="/about" class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors relative group">
+    <a
+      href="/tags"
+      class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors relative group"
+    >
+      標籤
+      <span
+        class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all group-hover:w-full"
+      ></span>
+    </a>
+    <a
+      href="/about"
+      class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors relative group"
+    >
       關於我
-      <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all group-hover:w-full"></span>
+      <span
+        class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all group-hover:w-full"
+      ></span>
     </a>
+    <div class="pl-2 border-l border-gray-200 dark:border-gray-800 ml-2">
+      <ThemeToggle />
+    </div>
   </nav>
 </header>

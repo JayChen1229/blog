@@ -1,51 +1,142 @@
 ---
+import { getCollection } from "astro:content";
 import BaseLayout from "./BaseLayout.astro";
 import Giscus from "../components/Giscus.astro";
-
-const { frontmatter } = Astro.props;
+import TableOfContents from "../components/TableOfContents.astro";
+import WritingCalendar from "../components/WritingCalendar.astro";
+import RelatedPosts from "../components/RelatedPosts.astro";
+const posts = await getCollection("blog");
+const { frontmatter, headings, prevPost, nextPost } = Astro.props;
 ---
 
-<BaseLayout title={frontmatter.title} description={frontmatter.description}>
-  <article class="prose prose-lg dark:prose-invert max-w-none">
-    <div class="mb-8 border-b border-gray-100 dark:border-gray-800 pb-8">
-      <div class="mb-4">
-        {
-          frontmatter.tags && (
-            <div class="flex flex-wrap gap-2">
-              {frontmatter.tags.map((tag: string) => (
-                <a
-                  href={`/tags/${tag}`}
-                  class="px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
-                >
-                  #{tag}
-                </a>
-              ))}
-            </div>
-          )
-        }
+<BaseLayout
+  title={frontmatter.title}
+  description={frontmatter.description}
+  wide={true}
+>
+  <div class="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-8">
+    <div class="min-w-0">
+      <article class="prose prose-lg dark:prose-invert max-w-none">
+        <div class="mb-8 border-b border-gray-100 dark:border-gray-800 pb-8">
+          <div class="mb-4">
+            {
+              frontmatter.tags && (
+                <div class="flex flex-wrap gap-2">
+                  {frontmatter.tags.map((tag: string) => (
+                    <a
+                      href={`/tags/${tag}`}
+                      class="px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                    >
+                      #{tag}
+                    </a>
+                  ))}
+                </div>
+              )
+            }
+          </div>
+          <h1
+            class="mb-2 !text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100"
+          >
+            {frontmatter.title}
+          </h1>
+          <div class="text-gray-500 dark:text-gray-400">
+            <time datetime={frontmatter.pubDate}
+              >{
+                new Date(frontmatter.pubDate).toLocaleDateString("zh-TW", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })
+              }</time
+            >
+          </div>
+        </div>
+
+        <slot />
+      </article>
+
+      <div class="mt-8 border-t border-gray-100 dark:border-gray-800 pt-8">
+        <WritingCalendar />
+        <RelatedPosts />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+          {
+            prevPost ? (
+              <a
+                href={`/blog/${prevPost.slug}/`}
+                class="group p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
+                title={prevPost.data.title}
+              >
+                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3 mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  上一篇
+                </div>
+                <div class="font-medium text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
+                  {prevPost.data.title}
+                </div>
+              </a>
+            ) : (
+              <div />
+            )
+          }
+          {
+            nextPost ? (
+              <a
+                href={`/blog/${nextPost.slug}/`}
+                class="group p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors text-right"
+                title={nextPost.data.title}
+              >
+                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center justify-end">
+                  下一篇
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3 ml-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+                <div class="font-medium text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
+                  {nextPost.data.title}
+                </div>
+              </a>
+            ) : (
+              <div />
+            )
+          }
+        </div>
       </div>
-      <h1
-        class="mb-2 !text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100"
-      >
-        {frontmatter.title}
-      </h1>
-      <div class="text-gray-500 dark:text-gray-400">
-        <time datetime={frontmatter.pubDate}
-          >{
-            new Date(frontmatter.pubDate).toLocaleDateString("zh-TW", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })
-          }</time
-        >
+
+      <div class="mt-16 pt-8 border-t border-gray-100 dark:border-gray-800">
+        <Giscus />
       </div>
     </div>
 
-    <slot />
-  </article>
-
-  <div class="mt-16 pt-8 border-t border-gray-100 dark:border-gray-800">
-    <Giscus />
+    <div class="hidden lg:block">
+      {
+        headings && headings.length > 0 && (
+          <TableOfContents headings={headings} />
+        )
+      }
+    </div>
   </div>
 </BaseLayout>
