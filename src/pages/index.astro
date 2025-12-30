@@ -8,44 +8,54 @@ const posts = (await getCollection('blog'))
 ---
 
 <BaseLayout title="首頁 | 個人部落格">
-  <section class="mb-16">
-    <h1 class="text-4xl font-extrabold mb-6 text-gray-900 dark:text-gray-100">你好，我是 Jay 👋</h1>
-    <p class="text-lg text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-      這裡是用於分享技術、思考與生活的地方。
-      <br />
-      這個部落格使用了 Astro、Tailwind CSS 和 MDX 構建。
-    </p>
-    <div class="flex gap-4">
-      <a href="/blog" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
-        閱讀文章
-      </a>
-      <a href="/about" class="inline-flex items-center justify-center px-5 py-3 border border-gray-300 dark:border-gray-700 text-base font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-        關於我
-      </a>
+  <section class="py-20 sm:py-32">
+    <div class="max-w-2xl">
+      <h1 class="text-4xl sm:text-6xl font-extrabold mb-6 text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
+        你好，我是 Jay <span class="inline-block animate-bounce">👋</span>
+      </h1>
+      <p class="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed max-w-lg">
+        這裡是用於分享技術、思考與生活的地方。
+        致力於打造極致的閱讀體驗。
+      </p>
+      <div class="flex gap-4">
+        <a href="/blog" class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-0.5">
+          開始閱讀
+        </a>
+        <a href="/about" class="inline-flex items-center justify-center px-6 py-3 border border-gray-200 dark:border-gray-700 text-base font-semibold rounded-lg text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md transition-all duration-300">
+          關於我
+        </a>
+      </div>
     </div>
   </section>
 
-  <section>
-    <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">最新文章</h2>
-    <div class="grid gap-8">
+  <section class="py-12 border-t border-gray-100 dark:border-gray-800">
+    <div class="flex items-baseline justify-between mb-8">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">最新文章</h2>
+      <a href="/blog" class="text-indigo-600 hover:text-indigo-700 font-medium text-sm">瀏覽所有 &rarr;</a>
+    </div>
+    
+    <div class="grid gap-8 sm:grid-cols-1">
       {
         posts.map((post) => (
-          <article class="p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow">
-            <a href={`/blog/${post.slug}/`} class="block group">
-              <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                {post.data.title}
-              </h3>
-              <p class="mt-2 text-gray-600 dark:text-gray-400 line-clamp-2">
-                {post.data.description}
-              </p>
-              <div class="mt-4 text-sm text-gray-500">
-                <time datetime={post.data.pubDate.toISOString()}>
+          <article class="group relative bg-white dark:bg-gray-900 rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 border border-gray-100 dark:border-gray-800 transition-all duration-300 hover:-translate-y-1">
+            <a href={`/blog/${post.slug}/`} class="block focus:outline-none">
+              <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mb-3">
+                <time datetime={post.data.pubDate.toISOString()} class="font-medium text-xs uppercase tracking-wider">
                   {post.data.pubDate.toLocaleDateString('zh-TW', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
                   })}
                 </time>
+              </div>
+              <h3 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                {post.data.title}
+              </h3>
+              <p class="text-gray-600 dark:text-gray-400 leading-relaxed mb-4 line-clamp-2">
+                {post.data.description}
+              </p>
+              <div class="inline-flex items-center text-indigo-600 dark:text-indigo-400 font-medium text-sm group-hover:underline">
+                閱讀更多
               </div>
             </a>
           </article>

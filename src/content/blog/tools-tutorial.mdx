@@ -1,0 +1,111 @@
+---
+title: 打造高效寫作環境：Astro 部落格的 MDX 與 Obsidian 工具指南
+description: 工欲善其事，必先利其器。本文介紹如何設定 Astro 支援 MDX，以及解決 Obsidian 無法預覽 MDX 檔案的完整教學。
+pubDate: 2025-12-30
+tags:
+  - Astro
+  - Obsidian
+  - MDX
+  - Tools
+---
+
+歡迎來到我的部落格架設筆記！
+
+既然選擇了 **Astro** 作為框架，使用 **MDX** 來撰寫文章是提升互動性的最佳選擇。但這也帶來了一個小麻煩：我們慣用的筆記軟體 **Obsidian** 預設並不支援這種格式。
+
+這篇文章將帶你一次解決開發環境與寫作環境的所有問題。
+
+## 1. 什麼是 MDX？
+
+簡單來說，MDX 就是 **Markdown + JSX**。它允許你在標準的 Markdown 文件中，直接 `import` 並使用 React、Vue 或 Astro 的組件。
+
+### 比較範例
+
+如果是傳統的 Markdown (`.md`)，想要一個警告框只能依賴 CSS class：
+
+```html
+<div class="alert alert-warning">這是一個警告</div>
+```
+但在 MDX (`.mdx`) 中，我們可以直接使用組件（如下方所示）：
+
+<Alert type="warning"> 這是一個動態的 Alert 組件，它是由 Astro 直接渲染的！ </Alert>
+## 2. Astro 環境設定
+
+要在 Astro 專案中啟用 MDX 非常簡單，官方提供了自動化指令。
+
+請在你的專案根目錄執行終端機指令：
+```bash
+npx astro add mdx
+```
+這個指令會自動幫你：
+
+1. 安裝 `@astrojs/mdx` 依賴。
+    
+2. 更新 `astro.config.mjs` 設定檔。
+    
+
+安裝完成後，你就可以將文章副檔名從 `.md` 改為 `.mdx` 並開始使用了。
+
+---
+
+## 3. 讓 Obsidian 支援 MDX
+
+這是很多人的痛點。Obsidian 預設把 `.mdx` 當作純文字檔，導致無法預覽標題、粗體或連結。
+
+### 解決方案：安裝社群插件
+
+我們需要安裝插件來讓 Obsidian 把它「當作」Markdown 來處理。
+
+#### 推薦插件：MDX as MD
+
+這款插件最單純，它的功能就是告訴 Obsidian：「嘿，把 .mdx 檔案當作 .md 檔案來渲染。」
+
+**安裝步驟：**
+
+1. 開啟 Obsidian **Settings (設定)** > **Community plugins (社群外掛)**。
+    
+2. 關閉 **Restricted mode (安全模式)**。
+    
+3. 點擊 **Browse (瀏覽)** 並搜尋 `MDX`。
+    
+4. 找到 **"MDX as MD"** (或類似功能的插件如 _File associated_) 並安裝。
+    
+5. **啟用插件**。
+    
+
+### 效果對比
+
+|狀態|預覽效果|雙向連結 `[[Link]]`|
+|---|---|---|
+|**未安裝插件**|純文字，無格式|❌ 失效|
+|**安裝後**|✅ 標題、粗體正常顯示|✅ 正常運作|
+
+匯出到試算表
+
+> **注意**：Obsidian 只能渲染 Markdown 語法（標題、列表），無法執行其中的 React/Astro 組件（例如上面的 `<Alert>` 在 Obsidian 裡只會顯示程式碼原始碼）。
+
+---
+
+## 4. VS Code 開發工具推薦
+
+如果你有時候會直接用 VS Code 修改文章或調整排版，建議安裝以下擴充套件：
+
+1. **MDX** (Unifiedjs): 提供 MDX 的語法高亮 (Syntax Highlighting)。
+    
+2. **Astro**: 官方提供的 Astro 語法支援。
+    
+3. **Prettier**: 幫你自動格式化 MDX 內的縮排。
+    
+
+## 總結
+
+透過 Astro 強大的 MDX 整合，加上 Obsidian 的插件輔助，我們就能擁有一個：
+
+1. **在 Obsidian 舒服寫作**（專注文字結構）。
+    
+2. **在 Astro 靈活開發**（插入豐富組件）。
+    
+3. **在 VS Code 精修排版**（處理程式碼細節）。
+    
+
+這就是我目前的完美寫作工作流！

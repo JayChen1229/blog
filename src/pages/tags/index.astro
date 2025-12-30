@@ -1,0 +1,28 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+const allPosts = await getCollection("blog");
+const tags = [...new Set(allPosts.map((post) => post.data.tags || []).flat())];
+const pageTitle = "標籤索引";
+---
+
+<BaseLayout title={pageTitle}>
+    <section>
+        <h1 class="text-3xl font-bold mb-8 text-gray-900 dark:text-gray-100">
+            {pageTitle}
+        </h1>
+        <div class="flex flex-wrap gap-4">
+            {
+                tags.map((tag) => (
+                    <a
+                        href={`/tags/${tag}`}
+                        class="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-lg rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                    >
+                        {tag}
+                    </a>
+                ))
+            }
+        </div>
+    </section>
+</BaseLayout>

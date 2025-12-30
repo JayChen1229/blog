@@ -1,0 +1,75 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+export async function getStaticPaths() {
+    const allPosts = await getCollection("blog");
+    const uniqueTags = [
+        ...new Set(allPosts.map((post) => post.data.tags || []).flat()),
+    ];
+
+    return uniqueTags.map((tag) => {
+        const filteredPosts = allPosts.filter((post) =>
+            post.data.tags?.includes(tag),
+        );
+        return {
+            params: { tag },
+            props: { posts: filteredPosts },
+        };
+    });
+}
+
+const { tag } = Astro.params;
+const { posts } = Astro.props;
+const filteredPosts = posts.sort(
+    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+---
+
+<BaseLayout title={`標籤: ${tag}`}>
+    <section>
+        <h1 class="text-3xl font-bold mb-8 text-gray-900 dark:text-gray-100">
+            標籤: <span class="text-indigo-600 dark:text-indigo-400"
+                >{tag}</span>
+        </h1>
+        <ul class="space-y-8">
+            {
+                filteredPosts.map((post) => (
+                    <li class="group">
+                        <a href={`/blog/${post.slug}/`} class="block">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                {post.data.title}
+                            </h2>
+                            <p class="mt-2 text-gray-600 dark:text-gray-400 line-clamp-2">
+                                {post.data.description}
+                            </p>
+                            {post.data.tags && (
+                                <div class="mt-4 flex flex-wrap gap-2">
+                                    {post.data.tags.map((t: string) => (
+                                        <span class="z-10 relative px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs rounded-md">
+                                            #{t}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                            <div class="mt-2 text-sm text-gray-500">
+                                <time
+                                    datetime={post.data.pubDate.toISOString()}
+                                >
+                                    {post.data.pubDate.toLocaleDateString(
+                                        "zh-TW",
+                                        {
+                                            year: "numeric",
+                                            month: "long",
+                                            day: "numeric",
+                                        },
+                                    )}
+                                </time>
+                            </div>
+                        </a>
+                    </li>
+                ))
+            }
+        </ul>
+    </section>
+</BaseLayout>
