@@ -22,7 +22,7 @@
 /* Custom Utilities */
 @layer utilities {
     .glass-nav {
-        @apply backdrop-blur-md bg-white/70 dark:bg-gray-950/70 border-b border-gray-200/50 dark:border-gray-800/50 sticky top-0 z-50 transition-all duration-300;
+        @apply backdrop-blur-md bg-white/70 dark:bg-gray-950/70 border-b border-gray-200/50 dark:border-gray-800/50 sticky top-0 z-50 transition-all duration-500;
     }
 
     .animate-fade-in {

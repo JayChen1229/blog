@@ -13,19 +13,21 @@ for (let d = new Date(oneYearAgo); d <= today; d.setDate(d.getDate() + 1)) {
     days.push(new Date(d));
 }
 
-// Map post dates to frequency and titles
+// Map post dates to frequency, titles, and slugs
 interface PostInfo {
     count: number;
     titles: string[];
+    slugs: string[];
 }
 const postData: Record<string, PostInfo> = posts.reduce(
     (acc: Record<string, PostInfo>, post: any) => {
         const dateStr = post.data.pubDate.toISOString().split("T")[0];
         if (!acc[dateStr]) {
-            acc[dateStr] = { count: 0, titles: [] };
+            acc[dateStr] = { count: 0, titles: [], slugs: [] };
         }
         acc[dateStr].count += 1;
         acc[dateStr].titles.push(post.data.title);
+        acc[dateStr].slugs.push(post.slug);
         return acc;
     },
     {},
@@ -41,8 +43,8 @@ function getColor(count: number) {
 ---
 
 <div class="my-16 flex justify-center relative" id="calendar-container">
-    <div class="w-full max-w-2xl overflow-x-auto pb-4">
-        <div class="min-w-[600px] flex flex-col items-center">
+    <div class="w-full max-w-4xl overflow-x-auto pb-4 px-4">
+        <div class="min-w-[750px] flex flex-col items-center">
             <h3
                 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-6 text-center tracking-wide"
             >
@@ -70,6 +72,7 @@ function getColor(count: number) {
                             const info = postData[dateStr] || {
                                 count: 0,
                                 titles: [],
+                                slugs: [],
                             };
                             const dateDisplay = day.toLocaleDateString(
                                 "zh-TW",
@@ -81,9 +84,10 @@ function getColor(count: number) {
                             );
                             return (
                                 <div
-                                    class={`w-2.5 h-2.5 rounded-[2px] calendar-cell ${getColor(info.count)} ${info.count > 0 ? "cursor-pointer" : ""}`}
+                                    class={`w-2.5 h-2.5 rounded-[2px] calendar-cell ${getColor(info.count)} ${info.count > 0 ? "cursor-pointer hover:ring-2 hover:ring-indigo-400 transition-all" : ""}`}
                                     data-date={dateDisplay}
                                     data-titles={JSON.stringify(info.titles)}
+                                    data-slugs={JSON.stringify(info.slugs)}
                                     data-count={info.count}
                                 />
                             );
@@ -115,7 +119,7 @@ function getColor(count: number) {
     <!-- Tooltip -->
     <div
         id="calendar-tooltip"
-        class="absolute hidden z-50 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 px-4 py-3 pointer-events-none min-w-[200px] max-w-[300px]"
+        class="absolute hidden z-50 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 px-4 py-3 min-w-[200px] max-w-[300px]"
         style="transform: translate(-50%, -100%); margin-top: -12px;"
     >
         <div
@@ -128,6 +132,7 @@ function getColor(count: number) {
             class="text-indigo-600 dark:text-indigo-400 font-bold text-sm"
         >
         </div>
+        <div class="text-xs text-gray-400 mt-2">點擊前往文章</div>
     </div>
 </div>
 
@@ -175,6 +180,22 @@ function getColor(count: number) {
 
             cell.addEventListener("mouseleave", () => {
                 tooltip.classList.add("hidden");
+            });
+
+            // Click to navigate
+            cell.addEventListener("click", (e) => {
+                const target = e.target;
+                const slugs = JSON.parse(
+                    target.getAttribute("data-slugs") || "[]",
+                );
+
+                if (slugs.length === 1) {
+                    // Single post - navigate directly
+                    window.location.href = `/blog/${slugs[0]}/`;
+                } else if (slugs.length > 1) {
+                    // Multiple posts - navigate to first one (or could show a menu)
+                    window.location.href = `/blog/${slugs[0]}/`;
+                }
             });
         });
     })();
