@@ -1,0 +1,118 @@
+---
+title: 告別 ZooKeeper：Kafka KRaft 遷移踩坑實錄與「特洛伊木馬」救援術
+description: 紀錄一次從 ZooKeeper 遷移到 KRaft 的驚魂記。當 Broker ID 衝突、SASL 驗證死結發生時，如何透過「特洛伊木馬」戰術，在不遺失 User ACL 的前提下完成無痛遷移。
+pubDate: 2025-12-31
+tags:
+  - Tools
+  - Kafka
+---
+
+## 前言：為什麼要自找麻煩？
+
+大家都知道 Kafka 已經全面擁抱 **KRaft (Kafka Raft Metadata mode)**，目標是移除原本沈重的 ZooKeeper 依賴。官方文件寫得很美好：「只要開啟 Migration Mode，資料就會自動同步」。 
+
+作為一個追求系統架構簡潔的工程師（薩摩耶工程師？🐶），我決定在跨年前夕對生產環境動刀。目標很簡單： 
+1. **移除 ZooKeeper**（省資源、少維護一個組件）。 
+2. **保留所有 SASL/SCRAM User 資料**（這是最重要的資產）。 
+3. **合併 Process**：從原本的 Broker + ZK，變成單一的 KRaft Process。 
+
+殊不知，這是一個長達 24 小時的 Debug 地獄。 
+### 第一關：身分認同危機 (Identity Crisis) 
+遷移初期，為了安全起見，我採用了 **「雙開模式」**： 
+* **Controller (ID 100)**：獨立 Process，負責同步 ZK 資料。 
+* **Broker (ID 1)**：原本的 Broker，負責服務 Client。
+
+一切看似美好，直到我試圖將它們「合體」成一個 `process.roles=broker,controller` 的節點時，災難發生了。
+
+```bash 
+FATAL [KafkaServer id=1] Fatal error during KafkaServer startup. Prepare to shutdown kafka.common.InconsistentNodeIdException: The node id 1 does not match the metadata id 100
+```
+
+### 發生了什麼事？
+
+KRaft 的 Metadata Log 是有「記憶」的。 在遷移過程中，Controller (ID 100) 已經將自己註冊為「國王 (Leader)」，而將 Broker (ID 1) 視為「小兵」。 當我試圖修改設定檔，讓 ID 1 強行變身為 ID 100，或者讓 ID 100 兼職做 Broker 時，Metadata 會發現設定檔與 Log 紀錄不符，直接報錯崩潰。
+
+這導致了 **「雞生蛋，蛋生雞」** 的死結：
+
+- 想改設定？需要服務啟動。
+- 想啟動服務？需要設定正確。
+- 想重置？User 資料會不見。
+
+## 第二關：權限死鎖 (The Auth Lockout)
+
+在嘗試修復的過程中，因為頻繁修改 `server.properties`，一度導致 SASL 驗證失效。 錯誤訊息刷滿了螢幕：
+
+
+```Plaintext
+Authentication failed during authentication due to invalid credentials with SASL mechanism SCRAM-SHA-256
+```
+
+這時候最絕望的是：**我知道密碼，但 Kafka 不讓我登入。** 因為 Broker 認為自己是新的，讀不到舊的 User 資料；或者 Controller 活著，但拒絕身分不明的 Broker 連線。
+
+<Alert type="warning"> **緊急救援小技巧：** 如果你也遇到權限鎖死，可以暫時在 `server.properties` 開啟「SSL 匿名後門」： `listener.security.protocol.map=CONTROLLER:SSL` 且 `ssl.client.auth=none`。 加上 `super.users=User:ANONYMOUS`，讓你能先連進去救火。 </Alert>
+
+1. **Controller** 看了 Broker 1 的身分證後說：「**你的 Cluster ID 跟我不一樣** (`INVALID_REGISTRATION`)，滾！」
+
+**兇手只有一個：Broker 硬碟裡的 `meta.properties` 檔案。**
+
+這個檔案裡儲存了 Broker 第一次啟動時的 Cluster ID。如果你曾經刪除過 Controller 的資料並重新格式化（我們剛剛做了），Controller 的 ID 就變了，但 Broker 還留著舊的 ID。當兩者不一致時，註冊就會失敗。
+
+---
+
+### 🔥 最終解決方案：刪除 Broker 的身分證
+
+我們需要強制 Broker 丟掉舊的 ID，重新從 Zookeeper 抓取正確的 ID (`FQC...`)。
+
+請依照以下步驟操作，這應該能解決最後的問題：
+
+#### 步驟 1：停止 Broker
+
+```Bash
+systemctl stop kafka
+```
+
+#### 2. 刪除 Broker 的 `meta.properties`
+
+**請小心操作**，我們只要刪除 Broker 的這個檔案，**不要**刪除到 Controller 的（雖然它們路徑現在分開了，還是要確認一下）。
+
+你的 Broker `log.dirs` 是 `/var/lib/confluent`。
+
+
+```Bash
+rm /var/lib/confluent/meta.properties
+```
+
+_(注意：只刪除這個檔案，不要動其他的 log 資料夾)_
+
+#### 3. 再次確認 JAAS 設定 (保險起見)
+
+雖然 Broker 已經連上 ZK，但為了確保它跟 Controller 溝通順暢，請再次確認你的 `kafka.service` 裡面有設定 JAAS 環境變數。
+
+
+```Bash
+grep "KAFKA_OPTS" /usr/lib/systemd/system/confluent-kafka.service
+# 或 /etc/systemd/system/kafka.service
+```
+
+如果沒有，請加上去並 `daemon-reload`。如果有，直接跳下一步。
+
+#### 4. 啟動 Broker
+
+
+```Bash
+systemctl start kafka
+```
+
+---
+
+### 預期發生的事
+
+1. Broker 啟動，發現沒有 `meta.properties`。
+2. Broker 連上 Zookeeper，發現 Cluster ID 是 `FQC2PzcARZSEWH5Ig2A-Bg`。
+3. Broker 建立一個新的 `meta.properties`，寫入這個正確的 ID。
+4. Broker 向 Controller 註冊：「我是 Broker 1，Cluster ID 是 FQC...」。
+5. Controller 檢查：「ID 正確，你在 Zookeeper 名單上，准許進入！」
+6. **遷移開始同步。**
+    
+
+請嘗試刪除該檔案並重啟，然後觀察 `journalctl -u kafka -f`。
