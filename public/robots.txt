@@ -1,0 +1,8 @@
+# Robots.txt for The Samo Log
+# https://blog.samolab.com
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://blog.samolab.com/sitemap-index.xml

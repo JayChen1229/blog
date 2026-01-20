@@ -2,6 +2,8 @@
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import BackToTop from "../components/BackToTop.astro";
+import SEOHead from "../components/SEOHead.astro";
+import { ViewTransitions } from "astro:transitions";
 import "../styles/global.css";
 import "@fontsource/inter";
 
@@ -9,12 +11,21 @@ interface Props {
 	title: string;
 	description?: string;
 	wide?: boolean;
+	image?: string;
+	article?: {
+		publishedTime: string;
+		modifiedTime?: string;
+		author?: string;
+		tags?: string[];
+	};
 }
 
 const {
 	title,
-	description = "A simple personal blog.",
+	description = "技術分享、思考與生活的個人部落格。",
 	wide = false,
+	image,
+	article,
 } = Astro.props;
 ---
 
@@ -27,6 +38,26 @@ const {
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content={description} />
 		<title>{title}</title>
+
+		<!-- SEO Meta Tags -->
+		<SEOHead
+			title={title}
+			description={description}
+			image={image}
+			article={article}
+		/>
+
+		<!-- View Transitions for faster page navigation -->
+		<ViewTransitions />
+
+		<!-- Preload critical font -->
+		<link
+			rel="preload"
+			href="/fonts/inter-latin-400-normal.woff2"
+			as="font"
+			type="font/woff2"
+			crossorigin="anonymous"
+		/>
 	</head>
 	<body
 		class="flex flex-col min-h-full bg-gray-950 text-gray-100 font-sans selection:bg-violet-900 selection:text-violet-100 animate-fade-in"

@@ -16,6 +16,15 @@ const currentSlug = Astro.url.pathname.replace("/blog/", "").replace("/", "");
   title={frontmatter.title}
   description={frontmatter.description}
   wide={true}
+  image={frontmatter.heroImage}
+  article={{
+    publishedTime: new Date(frontmatter.pubDate).toISOString(),
+    modifiedTime: frontmatter.updatedDate
+      ? new Date(frontmatter.updatedDate).toISOString()
+      : undefined,
+    author: "Jay",
+    tags: frontmatter.tags,
+  }}
 >
   <div class="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-8">
     <div class="min-w-0">
