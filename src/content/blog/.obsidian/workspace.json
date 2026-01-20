@@ -74,7 +74,8 @@
               "title": "書籤"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
@@ -183,10 +184,12 @@
       "bases:建立新的 base": false
     }
   },
-  "active": "9935df493919f8f0",
+  "active": "5c2aefe11ca14e35",
   "lastOpenFiles": [
-    "hello-world.mdx",
+    "tdd-as-ai-protocol.mdx",
     "zookeeper-kraft.mdx",
+    "tdd.md",
+    "hello-world.mdx",
     "tools-tutorial.mdx",
     "tools-tutorial.mdx.md"
   ]

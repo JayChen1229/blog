@@ -1,0 +1,53 @@
+---
+title: "AI 時代的 TDD：這不是測試，這是你跟 AI 的通訊協定"
+description: "很多人以為 TDD (測試驅動開發) 是為了找 Bug，但在 AI Coding 時代，TDD 其實是最高效的 Prompt。身為一名習慣看 Log 抓問題的 SRE，我發現這才是讓 AI 寫出穩定 Code 的唯一解法。"
+pubDate: "2026-01-20"
+tags: ["AI", "TDD", "System Design", "SRE", "Productivity"]
+slug: "tdd-as-ai-protocol"
+---
+
+## 當資深後端工程師開始寫前端
+
+作為一名在金融業處理數據管線與 ELK Stack 的資深工程師，我習慣了「穩定性優先」的世界。我們的日常是監控 Data Streams、優化 Index 生命週期，任何一個變動都要有跡可循。
+
+但最近為了開發我的個人專案「Life Online」(一款 RPG 化的番茄鐘)，我跳進了前端與 AI Coding 的坑。一開始，我也沈迷於 Vibe Coding 的快感，直到我發現 AI 寫出來的 React Component 就像一個沒有做 Log Rotation 的伺服器——跑是可以跑，但隨時會炸開。
+
+這讓我開始思考：**為什麼我們在維運時堅持要看 Metrics 和 Logs，但在叫 AI 寫程式時，卻允許它「憑感覺」？**
+
+## TDD：AI 的「規格說明書」
+
+這幾天我正在研究 TDD (Test-Driven Development)，我突然頓悟了一件事：
+
+**在 AI 時代，TDD 的本質變了。它不再只是品質保證 (QA) 的工具，它是你跟 AI 溝通的「精確語言」。**
+
+試想一下兩種 Prompt 的區別：
+
+* **Vibe Coding 方式：**
+    > 「幫我寫一個計時器，時間到了要扣除玩家的 HP。」
+    > *（AI 的解讀：好喔，隨便塞個 `setTimeout`，狀態管理隨便寫，反正畫面有動就好。）*
+
+* **TDD / Spec First 方式：**
+    > 「我已經寫好了一個測試案例：當 `timeLeft` 歸零時，呼叫 `reducePlayerHP(10)`，並觸發 `GAME_OVER` 事件。請寫出能通過這個測試的函式。」
+    > *（AI 的解讀：收到。輸入是 `timeLeft`，輸出是 `void` 但有副作用。邏輯邊界被鎖死了，我不能亂寫。）*
+
+發現了嗎？**測試程式碼 (Test Code) 就是最完美的 Prompt。** 它消除了自然語言的歧義。
+
+## SRE 思維：先定義「什麼叫正常運作」
+
+在我的本業 SRE 工作中，我們在部署新服務前，會先設定好 Health Check 和 Alert Rule。如果你不知道怎麼監控它，你就不能部署它。
+
+同樣的邏輯應用在 AI Coding：
+
+1.  **BDD (行為驅動開發) 是你的「監控指標」：** 先用人類語言描述 User Story（例如：使用者點擊開始 -> 倒數開始）。
+2.  **TDD (測試驅動開發) 是你的「Health Check」：** 先寫好會 Fail 的紅燈測試。
+3.  **AI Implementation 是你的「自動修復腳本」：** 讓 AI 去把紅燈變綠燈。
+
+這種 **Red-Green-Refactor** 的循環，其實跟我平常在看 Grafana 面板處理 Incident 的流程一模一樣。
+
+## 結論：不要讓 AI 只有油門，沒有方向盤
+
+我原本擔心轉職寫 App 需要從頭學習 UI 框架，但我發現，**系統設計 (System Design)** 和 **資料結構** 的底層邏輯是通用的。
+
+不管是用 Fluentd 收 Log，還是用 React 渲染畫面，核心都是：**「資料怎麼流？狀態怎麼存？錯誤怎麼接？」**
+
+如果你也覺得用 AI 寫 Code 越來越亂，試試看 TDD 吧。不要急著叫 AI 產出功能，先叫 AI 幫你寫測試。一旦測試通過了，那種「系統盡在掌握中」的踏實感，才是資深工程師該追求的 Vibe。
