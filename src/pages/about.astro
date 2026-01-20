@@ -2,25 +2,77 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="關於我 | The Samo Log (薩摩日誌)">
+<BaseLayout title="關於我 | 薩摩日誌">
   <div class="max-w-2xl mx-auto">
     <div class="mb-10">
       <h1 class="text-3xl font-bold text-gray-100 mb-2">
         <span class="text-gradient">關於</span>我
       </h1>
-      <p class="text-gray-400">認識 The Samo Log 背後的創作者</p>
+      <p class="text-gray-400">認識薩摩日誌背後的創作者</p>
     </div>
 
     <div class="card-gradient-border p-8">
       <div class="prose prose-lg dark:prose-invert prose-gray max-w-none">
-        <p class="text-gray-300 leading-relaxed">
-          這是一個示範的關於頁面。你可以在這裡寫下你的自我介紹、經歷或者是這個部落格的初衷。
+        <p class="text-xl text-gray-200 font-medium mb-6">
+          嗨，我是 <span class="text-gradient">Samo</span>。
         </p>
-        <p class="text-gray-300 leading-relaxed">
-          因為使用了 <code
-            class="tag-glow px-2 py-1 rounded text-blue-300 text-sm"
-            >@tailwindcss/typography</code
-          >，這裡的內容會自動排版得很好看。
+
+        <h2
+          class="text-xl font-bold text-gray-100 mt-8 mb-4 flex items-center gap-2"
+        >
+          <span class="text-blue-400">☀️</span> 白天：SRE 工程師
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          在白天，我是一名資深 SRE
+          工程師，負責守護金融級別的日誌系統。每天處理超過
+          <span
+            class="tag-glow px-2 py-0.5 rounded text-blue-300 text-sm font-semibold"
+            >4TB</span
+          >
+          的數據流量，確保每一筆 Log 都能在 Kafka 與 Elasticsearch 之間精準流動。
+        </p>
+        <p class="text-gray-400 italic border-l-2 border-blue-500 pl-4 my-6">
+          「系統的優雅，來自於對細節的極致掌控。」
+        </p>
+
+        <h2
+          class="text-xl font-bold text-gray-100 mt-8 mb-4 flex items-center gap-2"
+        >
+          <span class="text-blue-400">🌙</span> 夜晚：獨立開發者
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          在夜晚，我脫下維運的帽子，成為一名獨立開發者。
+        </p>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          我曾經以為寫 App 只是堆砌功能，直到 AI 讓我陷入了 "Vibe Coding"
+          的陷阱。現在，我提倡
+          <span class="text-blue-300 font-semibold">「工程化開發」</span
+          >——堅持使用
+          <span class="tag-glow px-2 py-0.5 rounded text-blue-300 text-sm"
+            >Monorepo</span
+          >、
+          <span class="tag-glow px-2 py-0.5 rounded text-blue-300 text-sm"
+            >DDD</span
+          > 與
+          <span class="tag-glow px-2 py-0.5 rounded text-blue-300 text-sm"
+            >TDD</span
+          >
+          測試驅動開發來構建我的 Side Project
+          <span class="text-gray-100 font-medium">「RPG 番茄鐘」</span>。
+        </p>
+
+        <h2
+          class="text-xl font-bold text-gray-100 mt-8 mb-4 flex items-center gap-2"
+        >
+          <span class="text-blue-400">🧪</span> 這個網站
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          這個網站是我的數位實驗室。我不只寫程式碼，我寫下關於架構決策的思考、對
+          AI 協作的反思，以及一個後端架構師如何重新認識前端世界的筆記。
+        </p>
+
+        <p class="text-xl text-gray-200 font-medium mt-8 text-center">
+          歡迎來到我的旅程 🚀
         </p>
       </div>
     </div>
