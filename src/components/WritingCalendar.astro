@@ -122,7 +122,7 @@ function getColor(count: number) {
 </div>
 
 <script is:inline>
-    (function () {
+    function initCalendar() {
         const container = document.getElementById("calendar-container");
         const tooltip = document.getElementById("calendar-tooltip");
         const dateEl = document.getElementById("tooltip-date");
@@ -133,53 +133,110 @@ function getColor(count: number) {
         const cells = container.querySelectorAll(".calendar-cell");
 
         cells.forEach((cell) => {
-            const count = parseInt(cell.getAttribute("data-count") || "0");
+            const count = parseInt(cell.getAttribute("data-count") || "0", 10);
             if (count === 0) return;
 
-            cell.addEventListener("mouseenter", (e) => {
-                const target = e.target;
-                const date = target.getAttribute("data-date");
-                const titles = JSON.parse(
-                    target.getAttribute("data-titles") || "[]",
-                );
+            // Remove existing listeners to prevent duplicates
+            const newCell = cell.cloneNode(true);
+            cell.parentNode.replaceChild(newCell, cell);
 
-                if (dateEl) dateEl.textContent = date;
-                if (titlesEl) {
-                    titlesEl.innerHTML = titles
-                        .map((t) => `<div class="truncate">${t}</div>`)
-                        .join("");
-                }
-
-                tooltip.classList.remove("hidden");
-
-                // Position tooltip
-                const rect = target.getBoundingClientRect();
-                const containerRect = container.getBoundingClientRect();
-
-                const left = rect.left - containerRect.left + rect.width / 2;
-                const top = rect.top - containerRect.top;
-
-                tooltip.style.left = left + "px";
-                tooltip.style.top = top + "px";
+            // Show tooltip on hover (desktop)
+            newCell.addEventListener("mouseenter", function (e) {
+                const target = e.currentTarget;
+                showTooltip(target);
             });
 
-            cell.addEventListener("mouseleave", () => {
-                tooltip.classList.add("hidden");
+            newCell.addEventListener("mouseleave", function () {
+                hideTooltip();
             });
 
-            // Click to navigate
-            cell.addEventListener("click", (e) => {
-                const target = e.target;
-                const slugs = JSON.parse(
-                    target.getAttribute("data-slugs") || "[]",
-                );
-
-                if (slugs.length === 1) {
-                    window.location.href = `/blog/${slugs[0]}/`;
-                } else if (slugs.length > 1) {
-                    window.location.href = `/blog/${slugs[0]}/`;
-                }
+            // Handle click/tap for navigation
+            newCell.addEventListener("click", function (e) {
+                e.preventDefault();
+                const target = e.currentTarget;
+                navigateToPost(target);
             });
+
+            // Touch support for iOS Safari
+            newCell.addEventListener(
+                "touchstart",
+                function (e) {
+                    const target = e.currentTarget;
+                    showTooltip(target);
+                },
+                { passive: true },
+            );
+
+            newCell.addEventListener(
+                "touchend",
+                function (e) {
+                    const target = e.currentTarget;
+                    // Small delay to show tooltip before navigating
+                    setTimeout(() => {
+                        navigateToPost(target);
+                    }, 150);
+                },
+                { passive: true },
+            );
         });
-    })();
+
+        function showTooltip(target) {
+            const date = target.getAttribute("data-date");
+            const titlesStr = target.getAttribute("data-titles");
+            let titles = [];
+            try {
+                titles = JSON.parse(titlesStr || "[]");
+            } catch (err) {
+                titles = [];
+            }
+
+            if (dateEl) dateEl.textContent = date;
+            if (titlesEl) {
+                titlesEl.innerHTML = titles
+                    .map((t) => `<div class="truncate">${t}</div>`)
+                    .join("");
+            }
+
+            tooltip.classList.remove("hidden");
+
+            // Position tooltip
+            const rect = target.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            const left = rect.left - containerRect.left + rect.width / 2;
+            const top = rect.top - containerRect.top;
+
+            tooltip.style.left = left + "px";
+            tooltip.style.top = top + "px";
+        }
+
+        function hideTooltip() {
+            tooltip.classList.add("hidden");
+        }
+
+        function navigateToPost(target) {
+            const slugsStr = target.getAttribute("data-slugs");
+            let slugs = [];
+            try {
+                slugs = JSON.parse(slugsStr || "[]");
+            } catch (err) {
+                slugs = [];
+            }
+
+            if (slugs.length > 0) {
+                window.location.href = "/blog/" + slugs[0] + "/";
+            }
+        }
+    }
+
+    // Initialize on DOM ready
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initCalendar);
+    } else {
+        initCalendar();
+    }
+
+    // Re-initialize after View Transitions (Astro page navigation)
+    document.addEventListener("astro:after-swap", initCalendar);
+    document.addEventListener("astro:page-load", initCalendar);
 </script>
