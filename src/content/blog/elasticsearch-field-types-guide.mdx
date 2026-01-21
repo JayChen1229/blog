@@ -1,0 +1,78 @@
+---
+title: Elasticsearch 型別選用指南：別再預設 Dynamic Mapping 了
+description: 做 Log 分析時，我們習慣依賴 ES 的自動判斷；但在開發 App 時，選錯資料型別就是災難的開始。這篇筆記整理了 ES 9.0+ 關鍵型別，以及它們在系統設計中的真實應用場景。
+pubDate: 2026-01-21
+tags:
+  - Elasticsearch
+  - Database
+slug: elasticsearch-field-types-guide
+---
+
+## 為什麼型別很重要？(SRE vs Developer)
+
+以前在做 Log 監控時，我們最怕的是 Mapping Explosion（欄位爆炸）。但在開發應用程式（例如我的 Life Online RPG 專案）時，我們怕的是 **「查不到」** 或 **「效能差」**。
+
+Elasticsearch 9.0+ 的文件列出了幾十種型別，對於開發者來說，最需要關注的不再只是 `text` 和 `keyword`。以下是我針對 App 開發與 RAG 應用整理的選型策略。
+
+## 1. 文字類：搜尋 vs 過濾
+
+這是最基礎但也最常搞混的。
+
+* **`keyword` (精確值)**
+    * **用途：** ID、標籤、狀態碼、Email。
+    * **RPG 場景：** 玩家 ID (`player_id`)、道具種類 (`item_type: "weapon"`)。
+    * **特性：** 不會被分詞，排序與聚合 (Aggregation) 必備。
+
+* **`text` (全文檢索)**
+    * **用途：** 文章內容、對話記錄、日誌訊息。
+    * **RPG 場景：** 任務描述 (`quest_description`)、玩家傳記。
+    * **特性：** 會被 Analyzer 拆解，支援 fuzzy search，但無法用於精確排序。
+
+* **`wildcard` (SRE 神器)**
+    * **用途：** 專門給像 `grep` 一樣的模糊搜尋（如 `*error*`）。
+    * **SRE 場景：** 搜尋 Log 中的 Stack Trace。這比用 `text` 欄位硬搜更省資源。
+
+## 2. 結構化資料：JSON 的陷阱
+
+當你要存一個「物件」時（例如玩家的背包），你有三種選擇，選錯會很慘。
+
+* **`object` (預設)**
+    * **問題：** 它會把內層欄位「攤平」。如果你搜尋 `{ "name": "Sword", "status": "broken" }`，可能會誤搜到「名字叫 Sword 但另一個道具有 broken 狀態」的資料。
+
+* **`nested` (巢狀物件)**
+    * **用途：** 需要精確對應陣列內物件的屬性。
+    * **RPG 場景：** **玩家背包 (Inventory)**。你需要確保搜尋「損壞的(broken) + 劍(sword)」是同一把武器，而不是背包裡有一把劍，和另一個損壞的盾牌。
+    * **代價：** 查詢效能較差，因為每個 nested object 其實是獨立的 hidden document。
+
+* **`flattened` (扁平化)**
+    * **用途：** 只有一堆 Key-Value，不需要對裡面的值做複雜搜尋。
+    * **SRE 場景：** Kubernetes Labels、HTTP Headers。
+    * **RPG 場景：** 玩家的自定義設定檔 (Settings)，你只在乎存取，不在乎拿裡面的某個 key 來做 range query。
+
+## 3. AI 與向量搜尋 (RAG 必備)
+
+既然要導入 AI，這兩個型別是 9.0+ 的核心：
+
+* **`dense_vector`**
+    * **用途：** 儲存 Embedding (向量)。
+    * **場景：** 知識庫的語意搜尋 (Semantic Search)。當你問「如何獲得更強的裝備？」，系統會比對向量，而不是關鍵字。
+    * **注意：** 需考慮維度 (dimensions) 和相似度演算法 (cosine/l2_norm)。
+
+* **`semantic_text` (新功能)**
+    * **用途：** ES 自動幫你做 Embedding 和 Chunking。你只要丟文字進去，它自動變向量。這大幅降低了 RAG 的門檻。
+
+## 4. 數值與特殊型別
+
+* **`long` vs `double`：**
+    * 經驗值 (XP)、金幣 (Gold) 請用 `long` (整數)。
+    * 機率、權重請用 `double`。
+* **`date_nanos`：**
+    * 如果你在做高頻交易或極細緻的效能監控，標準的 `date` (毫秒) 可能不夠，`date_nanos` 提供奈秒級精度。
+
+## 結論：Spec First
+
+回到我們提倡的 **TDD (Spec First)** 開發模式。在你寫任何 Code 之前，先寫出 `mapping.json`。
+
+這不僅是資料庫的 Schema，這是你對 **「這個世界如何運作」** 的定義。如果你無法決定一個欄位該用 `nested` 還是 `object`，代表你對業務邏輯（Business Logic）還沒想清楚。
+
+**下次開工前，先問自己：我需要對這個欄位做 Aggregation 嗎？我需要向量搜尋嗎？**
