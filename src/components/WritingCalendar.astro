@@ -109,26 +109,66 @@ function getColor(count: number) {
         </div>
     </div>
 
-    <!-- Tooltip -->
+    <!-- Article Popover (shown on click) -->
+    <div
+        id="calendar-popover"
+        class="absolute hidden z-50 bg-gray-900/95 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-700/50 px-5 py-4 min-w-[240px] max-w-[320px]"
+        style="transform: translate(-50%, -100%); margin-top: -16px;"
+    >
+        <div
+            id="popover-date"
+            class="text-xs text-gray-400 mb-3 flex items-center gap-2"
+        >
+            <svg
+                class="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                ></path>
+            </svg>
+            <span id="popover-date-text"></span>
+        </div>
+        <div id="popover-articles" class="space-y-2"></div>
+        <div
+            class="text-[10px] text-gray-500 mt-3 pt-2 border-t border-gray-700/50 text-center"
+        >
+            點擊文章標題前往 · 點擊其他處關閉
+        </div>
+        <!-- Arrow pointer -->
+        <div
+            class="absolute left-1/2 -translate-x-1/2 -bottom-2 w-4 h-4 bg-gray-900/95 border-r border-b border-gray-700/50 transform rotate-45"
+        >
+        </div>
+    </div>
+
+    <!-- Hover Tooltip (preview only) -->
     <div
         id="calendar-tooltip"
-        class="absolute hidden z-50 bg-gray-900 rounded-lg shadow-xl border border-gray-700 px-4 py-3 min-w-[200px] max-w-[300px]"
-        style="transform: translate(-50%, -100%); margin-top: -12px;"
+        class="absolute hidden z-40 bg-gray-800 rounded-md shadow-lg px-3 py-2 text-xs text-gray-300 pointer-events-none"
+        style="transform: translate(-50%, -100%); margin-top: -8px;"
     >
-        <div id="tooltip-date" class="text-xs text-gray-400 mb-1"></div>
-        <div id="tooltip-titles" class="text-blue-400 font-bold text-sm"></div>
-        <div class="text-xs text-gray-400 mt-2">點擊前往文章</div>
+        <span id="tooltip-text"></span>
     </div>
 </div>
 
 <script is:inline>
     function initCalendar() {
         const container = document.getElementById("calendar-container");
+        const popover = document.getElementById("calendar-popover");
+        const popoverDateText = document.getElementById("popover-date-text");
+        const popoverArticles = document.getElementById("popover-articles");
         const tooltip = document.getElementById("calendar-tooltip");
-        const dateEl = document.getElementById("tooltip-date");
-        const titlesEl = document.getElementById("tooltip-titles");
+        const tooltipText = document.getElementById("tooltip-text");
 
-        if (!container || !tooltip) return;
+        if (!container || !popover || !tooltip) return;
+
+        let activeCell = null;
 
         const cells = container.querySelectorAll(".calendar-cell");
 
@@ -140,8 +180,9 @@ function getColor(count: number) {
             const newCell = cell.cloneNode(true);
             cell.parentNode.replaceChild(newCell, cell);
 
-            // Show tooltip on hover (desktop)
+            // Show simple tooltip on hover (desktop)
             newCell.addEventListener("mouseenter", function (e) {
+                if (activeCell) return; // Don't show tooltip if popover is open
                 const target = e.currentTarget;
                 showTooltip(target);
             });
@@ -150,82 +191,139 @@ function getColor(count: number) {
                 hideTooltip();
             });
 
-            // Handle click/tap for navigation
+            // Handle click to show popover with article links
             newCell.addEventListener("click", function (e) {
                 e.preventDefault();
+                e.stopPropagation();
                 const target = e.currentTarget;
-                navigateToPost(target);
+
+                // If clicking the same cell, close popover
+                if (activeCell === target) {
+                    hidePopover();
+                    return;
+                }
+
+                showPopover(target);
             });
 
-            // Touch support for iOS Safari
-            newCell.addEventListener(
-                "touchstart",
-                function (e) {
-                    const target = e.currentTarget;
-                    showTooltip(target);
-                },
-                { passive: true },
-            );
-
+            // Touch support
             newCell.addEventListener(
                 "touchend",
                 function (e) {
+                    e.preventDefault();
                     const target = e.currentTarget;
-                    // Small delay to show tooltip before navigating
-                    setTimeout(() => {
-                        navigateToPost(target);
-                    }, 150);
+
+                    if (activeCell === target) {
+                        hidePopover();
+                        return;
+                    }
+
+                    showPopover(target);
                 },
-                { passive: true },
+                { passive: false },
             );
+        });
+
+        // Close popover when clicking outside
+        document.addEventListener("click", function (e) {
+            if (
+                !popover.contains(e.target) &&
+                activeCell &&
+                !activeCell.contains(e.target)
+            ) {
+                hidePopover();
+            }
+        });
+
+        // Close popover on escape key
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                hidePopover();
+            }
         });
 
         function showTooltip(target) {
             const date = target.getAttribute("data-date");
-            const titlesStr = target.getAttribute("data-titles");
-            let titles = [];
-            try {
-                titles = JSON.parse(titlesStr || "[]");
-            } catch (err) {
-                titles = [];
-            }
+            const count = target.getAttribute("data-count");
 
-            if (dateEl) dateEl.textContent = date;
-            if (titlesEl) {
-                titlesEl.innerHTML = titles
-                    .map((t) => `<div class="truncate">${t}</div>`)
-                    .join("");
+            if (tooltipText) {
+                tooltipText.textContent = `${date} · ${count} 篇文章`;
             }
 
             tooltip.classList.remove("hidden");
-
-            // Position tooltip
-            const rect = target.getBoundingClientRect();
-            const containerRect = container.getBoundingClientRect();
-
-            const left = rect.left - containerRect.left + rect.width / 2;
-            const top = rect.top - containerRect.top;
-
-            tooltip.style.left = left + "px";
-            tooltip.style.top = top + "px";
+            positionElement(tooltip, target, -8);
         }
 
         function hideTooltip() {
             tooltip.classList.add("hidden");
         }
 
-        function navigateToPost(target) {
+        function showPopover(target) {
+            hideTooltip();
+            activeCell = target;
+
+            // Highlight active cell
+            target.classList.add("ring-2", "ring-blue-400");
+
+            const date = target.getAttribute("data-date");
+            const titlesStr = target.getAttribute("data-titles");
             const slugsStr = target.getAttribute("data-slugs");
+
+            let titles = [];
             let slugs = [];
             try {
+                titles = JSON.parse(titlesStr || "[]");
                 slugs = JSON.parse(slugsStr || "[]");
             } catch (err) {
+                titles = [];
                 slugs = [];
             }
 
-            if (slugs.length > 0) {
-                window.location.href = "/blog/" + slugs[0] + "/";
+            if (popoverDateText) popoverDateText.textContent = date;
+
+            if (popoverArticles) {
+                popoverArticles.innerHTML = titles
+                    .map(
+                        (title, index) => `
+                    <a 
+                        href="/blog/${slugs[index]}/" 
+                        class="block px-3 py-2 rounded-lg bg-gray-800/50 hover:bg-blue-600/20 border border-transparent hover:border-blue-500/30 transition-all duration-200 group"
+                    >
+                        <div class="text-sm font-medium text-blue-400 group-hover:text-blue-300 truncate">${title}</div>
+                    </a>
+                `,
+                    )
+                    .join("");
             }
+
+            popover.classList.remove("hidden");
+            positionElement(popover, target, -16);
+        }
+
+        function hidePopover() {
+            popover.classList.add("hidden");
+            if (activeCell) {
+                activeCell.classList.remove("ring-2", "ring-blue-400");
+                activeCell = null;
+            }
+        }
+
+        function positionElement(element, target, marginTop) {
+            const rect = target.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            let left = rect.left - containerRect.left + rect.width / 2;
+            const top = rect.top - containerRect.top;
+
+            // Adjust if popover would go off-screen
+            const elementWidth = element.offsetWidth || 280;
+            const minLeft = elementWidth / 2 + 10;
+            const maxLeft = containerRect.width - elementWidth / 2 - 10;
+            left = Math.max(minLeft, Math.min(maxLeft, left));
+
+            element.style.left = left + "px";
+            element.style.top = top + "px";
+            element.style.marginTop = marginTop + "px";
         }
     }
 
