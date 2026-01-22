@@ -1,0 +1,101 @@
+---
+title: "Elasticsearch 9.0+ 角色全解：從 Master 到 Frozen，你的節點該扮演什麼職業？"
+description: "在 elasticsearch.yml 裡，node.roles 決定了伺服器的命運。本文詳細拆解 11 種節點角色，並特別解析 remote_cluster_client 與跨叢集監控的迷思。"
+pubDate: "2026-01-22"
+tags: ["Elasticsearch"]
+slug: "elasticsearch-node-roles-explained"
+---
+
+## 為什麼要分這麼細？
+
+Elasticsearch 以前只有 `master`, `data`, `ingest`。但到了 9.0+ 世代，為了追求極致的資源隔離與成本控制，角色（Roles）被拆分得非常細緻。
+
+這就像你的 RPG 遊戲「Life Online」一樣，你不能讓一個角色同時是「坦克」、「補師」又是「輸出」，那樣只會練出一個四不像。
+
+以下是每一個角色的詳細職責與應用場景。
+
+---
+
+## 一、大腦與核心 (Cluster Management)
+
+### 1. `master` (主節點)
+* **職責：** 整個 Cluster 的總指揮。負責維護 `cluster state`（有哪些 Node、有哪些 Index）、決定 Shard 要分配給誰。
+* **SRE 建議：** 生產環境請務必準備 **3 台 Dedicated Master**（只設這個角色）。如果 Master 死了，整個 Cluster 就無法寫入、無法建立新 Index，處於腦死狀態。
+
+---
+
+## 二、身體與記憶 (Data Roles)
+
+這裡的學問最大。ES 引入了 **Data Tiers (資料分層)** 的概念，讓不同性質的資料住不同的房子。
+
+### 2. `data` (通用資料節點)
+* **職責：** 什麼都存。這是舊時代的設定，或是給開發環境 (Dev) 用的。
+* **注意：** 如果你設定了這個角色，它會覆蓋掉下面所有的 hot/warm/cold 等專用角色。**在 Production 架構中，請盡量避免使用這個通用角色，改用分層角色。**
+
+### 3. `data_content` (內容層)
+* **職責：** 儲存 **「非時間序列」** 的長久資料。這類資料不會隨著時間變舊，我們隨時都需要快速查詢它。
+* **RPG 場景：** 你的 **「玩家資料 (Player Profile)」**、**「道具圖鑑」**。這些資料不是 Log，不會過期，需要一直保持在高效能狀態。
+* **SRE 場景：** Kibana 的設定檔 (`.kibana`)、告警規則 (`.monitoring-alerts`)。
+
+### 4. `data_hot` (熱層)
+* **職責：** 儲存 **「最新的」** 時間序列資料 (Time Series Data)。
+* **特點：** 寫入量最大 (Indexing heavy)、查詢最頻繁。
+* **SRE 場景：** **「最近 3 天的 Application Logs」**。這層請務必給它 NVMe SSD。
+
+### 5. `data_warm` (溫層)
+* **職責：** 儲存 **「近期但不再寫入」** 的資料。
+* **SRE 場景：** **「7 天 ~ 30 天的 Logs」**。這時候 Log 已經 Rollover 了，變為 Read-Only。我們可以接受查詢稍微慢一點點 (100ms vs 500ms)，但希望能省錢（使用 HDD 或便宜 SSD）。
+
+### 6. `data_cold` (冷層)
+* **職責：** 儲存 **「偶爾才查一次」** 的舊資料。
+* **SRE 場景：** **「30 天 ~ 90 天的 Logs」**。這層的 Replica 可能會被設為 0（透過 Searchable Snapshots 機制），查詢速度較慢，主要是為了合規稽核。
+
+### 7. `data_frozen` (凍結層)
+* **職責：** 儲存 **「幾乎不查」** 的歷史遺跡。
+* **技術原理：** 資料其實是存在 **S3 / GCS / Azure Blob** 上（Object Storage）。本地硬碟只是一個「快取 (Cache)」。
+* **SRE 場景：** **「1 年前的 Logs」**。查詢可能會花幾秒甚至幾分鐘，但儲存成本只有 Hot Node 的 1/10。
+
+
+
+---
+
+## 三、特殊技能 (Specialized Processing)
+
+### 8. `ingest` (資料處理)
+* **職責：** 在資料寫入 Disk 之前，執行 **Ingest Pipelines**。
+* **工作內容：** Grok 解析、GeoIP 轉換、移除敏感欄位。
+* **重要性：** 如果你的 Log 需要大量正規表示式解析，請獨立出 Ingest Node，不要讓它搶佔 Data Node 的 CPU。
+
+### 9. `ml` (機器學習)
+* **職責：** 執行 Machine Learning Jobs。
+* **SRE 場景：** **「Anomaly Detection (異常偵測)」**。例如：自動發現某個 API 的失敗率在今天下午 2 點突然偏離了過去 30 天的基準線。這需要大量的記憶體運算。
+
+### 10. `transform` (轉換)
+* **職責：** 執行 Transform Jobs（以實體為中心的索引轉換）。
+* **RPG 場景：** 你想做一個排行榜：「每個玩家過去 7 天獲得的總經驗值」。Transform Node 會定期去掃描 Raw Logs，算出加總，寫入一個新的 Summary Index。
+
+---
+
+## 四、外交官 (Connectivity)
+
+這裡就要回答你關於 **監控面板** 的問題了。
+
+### 11. `remote_cluster_client` (遠端叢集客戶端)
+* **職責：** 讓這個節點有能力 **「連線」** 到其他的 Elasticsearch Cluster。
+* **主要功能：**
+    1.  **CCS (Cross-Cluster Search)：** 在 Cluster A 搜尋 Cluster B 的資料。
+    2.  **CCR (Cross-Cluster Replication)：** 把 Cluster A 的資料同步備份到 Cluster B。
+
+## 總結：SRE 的完美陣型
+
+推薦組合如下
+
+- 3 台 Master : [ master ]
+- Gateway: []
+- Compute: [ ingest, ml, transform, remote_cluster_client ]
+- Data Hot: [ data_hot, data_content ]
+- Data Warm: [ data_warm ]
+- Data Cold: [ data_cold ]
+
+
+把角色分清楚，你的 Cluster 才會穩如泰山。

@@ -1,0 +1,70 @@
+---
+title: 權限陷阱：為什麼連 Superuser 都刪不掉 .reporting 索引？
+description: Elasticsearch 的 System Indices 受到特殊保護，即使是 admin 權限也無法直接刪除，導致 ILM 報錯卡死。本文解析 allow_restricted_indices 參數的關鍵作用。
+pubDate: 2026-01-23
+tags:
+  - Elasticsearch
+  - Security
+  - RBAC
+  - Troubleshooting
+slug: elasticsearch-allow-restricted-indices
+---
+
+## 靈異現象：永遠刪不掉的 85 個 Error
+
+在維運 Kibana 時，我們常看到 Reporting 功能產生大量的 `.reporting-2023-xx-xx` 索引。
+當你想透過 ILM 自動清除它們時，卻發現它們全部卡在 **"Lifecycle error"**。
+
+你嘗試手動刪除：
+`DELETE .reporting-2023-02-26`
+
+系統回傳：
+> `403 Forbidden: 即使你是 elastic (superuser)，你也沒有權限刪除系統索引。`
+
+這就是讓人崩潰的地方：**我明明是用最大權限的帳號，為什麼不能刪？**
+
+## 根因分析：Restricted Indices (受限索引)
+
+從 Elasticsearch 7.x 後期開始，為了防止管理者「手殘」誤刪重要的系統狀態（如 `.security`, `.kibana`, `.tasks`），官方引入了 **Restricted Indices** 機制。
+
+這些以 `.` 開頭的系統索引，預設是 **「隱形且鎖定」** 的。
+即便你的角色擁有 `indices: [*]` 和 `privileges: [all]`，這個 `*` 通配符 **並不包含** 受限索引。
+
+這就是為什麼你的 ILM 會報錯：
+1.  ILM Policy 試圖執行 Delete Action。
+2.  ILM 使用的 Service Account 雖然權限很高，但預設也被擋在 Restricted Wall 之外。
+3.  操作被拒絕 (403)，ILM 進入 Error 狀態，並無限重試。
+
+## 解法：上帝模式開關 `allow_restricted_indices`
+
+你找到的這段 JSON，關鍵只有一行：
+**`"allow_restricted_indices": true`**
+
+```json
+POST /_security/role/System_Index_Cleaner
+{
+  "indices": [
+    {
+      "names": [ ".reporting-*" ],  // 指定你要動刀的系統索引
+      "privileges": [ "all" ],
+      "allow_restricted_indices": true // <--- 這就是解鎖鑰匙
+    }
+  ]
+}
+```
+### 這個參數做了什麼？
+
+它告訴 Elasticsearch Security 模組：「我知道我在做危險操作，請把這個 Pattern (如 `.reporting-*`) 視為一般索引來處理，不要啟動系統保護機制。」
+
+## 結論
+
+Elasticsearch 的權限設計越來越嚴謹。下次如果遇到 **「明明是 admin 卻 Access Denied」** 的情況，請先檢查目標是不是 **「系統索引 (`.`)」**。
+
+如果是，記得拿出 `allow_restricted_indices: true` 這把尚方寶劍。
+
+```
+
+### 下一步
+既然解決了刪除權限問題，你可能需要檢查一下現有的 **ILM Policy** 是否有套用到 `.reporting-*` 上？
+通常我們會建議針對 `.reporting-*` 建立一個單獨的 Policy（例如 30 天直接刪除），並確保執行 ILM 的 User/Role 也擁有上述的 `allow_restricted_indices` 權限，這樣才不會過幾個月又爆發一次。
+```
