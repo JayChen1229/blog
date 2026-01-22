@@ -68,20 +68,19 @@ const currentSlug = Astro.url.pathname.replace("/blog/", "").replace("/", "");
       </article>
 
       <div class="mt-8 border-t border-gray-800 pt-8">
-        <WritingCalendar posts={posts} />
-        <RelatedPosts posts={posts} currentSlug={currentSlug} />
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+        <!-- Previous/Next Article Navigation -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
           {
             prevPost ? (
               <a
                 href={`/blog/${prevPost.slug}/`}
-                class="group p-4 rounded-xl border border-gray-800 hover:border-blue-700 transition-colors"
+                class="group p-4 rounded-xl border border-gray-800 hover:border-blue-600 hover:bg-gray-900/50 transition-all duration-300"
                 title={prevPost.data.title}
               >
-                <div class="text-xs text-gray-400 mb-1 flex items-center">
+                <div class="text-xs text-gray-400 mb-2 flex items-center gap-1">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-3 w-3 mr-1"
+                    class="h-4 w-4 group-hover:-translate-x-1 transition-transform"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -95,7 +94,7 @@ const currentSlug = Astro.url.pathname.replace("/blog/", "").replace("/", "");
                   </svg>
                   上一篇
                 </div>
-                <div class="font-medium text-gray-100 group-hover:text-blue-400 transition-colors line-clamp-1">
+                <div class="font-medium text-gray-100 group-hover:text-blue-400 transition-colors line-clamp-2">
                   {prevPost.data.title}
                 </div>
               </a>
@@ -107,14 +106,14 @@ const currentSlug = Astro.url.pathname.replace("/blog/", "").replace("/", "");
             nextPost ? (
               <a
                 href={`/blog/${nextPost.slug}/`}
-                class="group p-4 rounded-xl border border-gray-800 hover:border-blue-700 transition-colors text-right"
+                class="group p-4 rounded-xl border border-gray-800 hover:border-blue-600 hover:bg-gray-900/50 transition-all duration-300 text-right"
                 title={nextPost.data.title}
               >
-                <div class="text-xs text-gray-400 mb-1 flex items-center justify-end">
+                <div class="text-xs text-gray-400 mb-2 flex items-center justify-end gap-1">
                   下一篇
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-3 w-3 ml-1"
+                    class="h-4 w-4 group-hover:translate-x-1 transition-transform"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -127,7 +126,7 @@ const currentSlug = Astro.url.pathname.replace("/blog/", "").replace("/", "");
                     />
                   </svg>
                 </div>
-                <div class="font-medium text-gray-100 group-hover:text-blue-400 transition-colors line-clamp-1">
+                <div class="font-medium text-gray-100 group-hover:text-blue-400 transition-colors line-clamp-2">
                   {nextPost.data.title}
                 </div>
               </a>
@@ -136,6 +135,12 @@ const currentSlug = Astro.url.pathname.replace("/blog/", "").replace("/", "");
             )
           }
         </div>
+
+        <!-- Writing Calendar -->
+        <WritingCalendar posts={posts} />
+
+        <!-- Related Posts -->
+        <RelatedPosts posts={posts} currentSlug={currentSlug} />
       </div>
 
       <div class="mt-16 pt-8 border-t border-gray-800">

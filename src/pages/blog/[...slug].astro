@@ -5,16 +5,35 @@ import Alert from "../../components/Alert.astro";
 
 export async function getStaticPaths() {
 	const posts = await getCollection("blog");
-	return posts.map((post) => ({
+	// Sort posts by publication date (newest first)
+	const sortedPosts = posts.sort(
+		(a, b) =>
+			new Date(b.data.pubDate).getTime() -
+			new Date(a.data.pubDate).getTime(),
+	);
+
+	return sortedPosts.map((post, index) => ({
 		params: { slug: post.slug },
-		props: post,
+		props: {
+			post,
+			// Previous post (older date) - index + 1 in newest-first array
+			prevPost:
+				index < sortedPosts.length - 1 ? sortedPosts[index + 1] : null,
+			// Next post (newer date) - index - 1 in newest-first array
+			nextPost: index > 0 ? sortedPosts[index - 1] : null,
+		},
 	}));
 }
 
-const post = Astro.props;
+const { post, prevPost, nextPost } = Astro.props;
 const { Content, headings } = await post.render();
 ---
 
-<BlogPost frontmatter={post.data} headings={headings}>
+<BlogPost
+	frontmatter={post.data}
+	headings={headings}
+	prevPost={prevPost}
+	nextPost={nextPost}
+>
 	<Content components={{ Alert }} />
 </BlogPost>
