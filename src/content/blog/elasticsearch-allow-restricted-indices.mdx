@@ -1,13 +1,9 @@
 ---
-title: 權限陷阱：為什麼連 Superuser 都刪不掉 .reporting 索引？
-description: Elasticsearch 的 System Indices 受到特殊保護，即使是 admin 權限也無法直接刪除，導致 ILM 報錯卡死。本文解析 allow_restricted_indices 參數的關鍵作用。
-pubDate: 2026-01-23
-tags:
-  - Elasticsearch
-  - Security
-  - RBAC
-  - Troubleshooting
-slug: elasticsearch-allow-restricted-indices
+title: "權限陷阱：為什麼連 Superuser 都刪不掉 .reporting 索引？"
+description: "Elasticsearch 的 System Indices 受到特殊保護，即使是 admin 權限也無法直接刪除，導致 ILM 報錯卡死。本文解析 allow_restricted_indices 參數的關鍵作用。"
+pubDate: "2026-01-22"
+tags: ["Elasticsearch", "Security", "RBAC", "Troubleshooting"]
+slug: "elasticsearch-allow-restricted-indices"
 ---
 
 ## 靈異現象：永遠刪不掉的 85 個 Error
@@ -51,20 +47,4 @@ POST /_security/role/System_Index_Cleaner
     }
   ]
 }
-```
-### 這個參數做了什麼？
-
-它告訴 Elasticsearch Security 模組：「我知道我在做危險操作，請把這個 Pattern (如 `.reporting-*`) 視為一般索引來處理，不要啟動系統保護機制。」
-
-## 結論
-
-Elasticsearch 的權限設計越來越嚴謹。下次如果遇到 **「明明是 admin 卻 Access Denied」** 的情況，請先檢查目標是不是 **「系統索引 (`.`)」**。
-
-如果是，記得拿出 `allow_restricted_indices: true` 這把尚方寶劍。
-
-```
-
-### 下一步
-既然解決了刪除權限問題，你可能需要檢查一下現有的 **ILM Policy** 是否有套用到 `.reporting-*` 上？
-通常我們會建議針對 `.reporting-*` 建立一個單獨的 Policy（例如 30 天直接刪除），並確保執行 ILM 的 User/Role 也擁有上述的 `allow_restricted_indices` 權限，這樣才不會過幾個月又爆發一次。
 ```
