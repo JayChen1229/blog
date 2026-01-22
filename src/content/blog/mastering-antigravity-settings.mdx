@@ -1,0 +1,89 @@
+---
+title: Antigravity 設定全攻略：如何讓 AI 成為你的 10x 助手，而不是資安破口
+description: Google Antigravity 提供了強大的 Agent 能力，但預設設定往往不是最佳解。本文從 SRE 與開發者的雙重視角，深入解析 Terminal、File Access 與 Automation 設定，助你打造最順手的 AI Coding 環境。
+pubDate: 2026-01-02
+tags:
+  - AI-Coding
+  - Antigravity
+  - Productivity
+  - DevOps
+  - Security
+slug: mastering-antigravity-settings
+---
+
+## 當 AI 能夠控制你的 Terminal
+
+在 AI Coding 的領域，我們從單純的 Chat (ChatGPT) 進化到了 Copilot (GitHub Copilot)，現在進入了 **Agent (Antigravity/Cursor)** 的時代。
+
+最大的差別在於：**Agent 有手腳。** 它可以讀寫檔案，甚至執行終端機指令。
+
+這聽起來很美好——直到 AI 決定幫你執行 `rm -rf ./src` 重構程式碼，或者把你的 `.env` 檔當作 Context 傳送出去。
+
+身為一名重視資安的 SRE，同時也是追求開發速度的開發者，我花了點時間研究 Antigravity 的設定檔。以下是我認為能兼顧 **「心流 (Flow)」** 與 **「零信任 (Zero Trust)」** 的最佳配置。
+
+## 一、Terminal：給它權限，但要設下邊界
+
+這是最核心的設定。如果你全部開 `Always Proceed`，你的開發速度會飛快，但風險極高；全部開 `Request Review`，你會被確認視窗煩死。
+
+### 推薦策略：Allow List (白名單) 優先
+
+不要依賴 AI 的良心，要依賴規則。
+
+* **Terminal Command Auto Execution:** 設定為 `Request Review`。
+    * *理由：* 預設不信任，所有指令都要我看過。
+* **Allow List Terminal Commands:** (這才是重點)
+    * 將高頻且無害的指令加入白名單，讓 AI 自動執行，不打斷你的心流。
+    * **建議清單：**
+        * `ls`, `cat`, `grep`, `find` (讀取資訊類)
+        * `npm run test`, `npm test` (測試類)
+        * `npm run lint`, `eslint` (檢查類)
+        * `git status`, `git diff` (版控查詢)
+* **Deny List:** (保險絲)
+    * 有些指令絕對不能讓 AI 碰。
+    * **建議清單：** `rm`, `mv`, `dd`, `git push`, `docker system prune`, `kubectl delete`。
+
+
+
+## 二、File Access：最小權限原則
+
+Antigravity 預設可能會讀取太多資訊。
+
+* **Agent Non-Workspace File Access:** **務必設為 `Disabled`** ❌
+    * *SRE 警告：* 這就像 Docker 的 Volume Mapping。你不會希望 Container 能讀到 Host 的 `/etc/passwd`，同樣的，你也不該讓 Agent 讀到你專案以外的檔案 (例如 `~/.ssh/id_rsa`)。
+* **Agent Gitignore Access:** **小心使用 (`Use with caution`)** ⚠️
+    * 這是一個兩難。
+    * **開：** Agent 知道哪些檔案被忽略，比較懂專案結構。
+    * **關：** 防止 Agent 意外讀取到 `.env` 裡的 API Key。
+    * **我的作法：** 開啟，但確保我的 `.gitignore` 寫得很好，且敏感資訊是用 `env variable` 注入而非明碼存在檔案中。
+
+## 三、Automation：讓 AI 當你的清潔工
+
+這是 Agent 最強大的地方——幫你擦屁股。
+
+* **Agent Auto-Fix Lints:** **設為 `Enabled`** ✅
+    * *體驗：* 這是提升效率的神器。當 AI 寫完 Code，Lint 報錯（例如縮排不對、變數未宣告），Agent 會自動在背景修好，不需要你介入。這讓你專注在邏輯，而非格式。
+* **Auto-Continue:** **設為 `Enabled`** ✅
+    * 當 AI 寫長篇大論（例如產生一個複雜的 React Component）時，不要讓它停下來問「要繼續嗎？」，讓它一口氣寫完。
+
+## 四、History & Knowledge：打造專屬大腦
+
+如果你正在做一個像我的「Life Online (RPG 番茄鐘)」這樣複雜的專案，這兩個設定至關重要。
+
+* **Knowledge:** **設為 `Enabled`** ✅
+    * 這會啟用 RAG (Retrieval-Augmented Generation)。AI 會把你的 Codebase 建立索引。
+    * **好處：** 當你問「修改經驗值計算公式」時，它不需要你告知公式在哪個檔案，它自己「知道」要去改 `src/utils/levelUp.ts`。
+
+## 總結：我的 recommended_settings.json
+
+針對 **Side Project 開發 (追求速度，但有底線)** 的場景，這是我的最終設定建議：
+
+| 設定項目 | 建議值 | 理由 |
+| :--- | :--- | :--- |
+| **Secure Mode** | **Enabled** | 防止 Prompt Injection 攻擊。 |
+| **Review Policy** | **Agent Decides** | 對於產生文件或 Code，信任 AI 的判斷。 |
+| **Terminal Auto Exec** | **Request Review** | **搭配強大的 Allow List** (如 `npm test`)。 |
+| **Non-Workspace Access** | **Disabled** | 嚴格禁止越界存取。 |
+| **Auto-Fix Lints** | **Enabled** | 自動化修復，保持代碼整潔。 |
+| **Knowledge** | **Enabled** | 讓 AI 擁有專案的全域視野。 |
+
+別忘了，**你是架構師，AI 只是你的手**。設定好這些規則，就是為了讓這雙手動得更快，但不會伸進不該伸的地方。
