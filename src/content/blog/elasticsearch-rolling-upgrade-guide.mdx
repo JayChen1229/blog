@@ -87,7 +87,7 @@ sudo systemctl start elasticsearch
 確認它有加入 Cluster：
 ```bash
 # 檢查該 Node 的 version 欄位是否變成新版
-GET _cat/nodes?vh=ip,name,version&v=ture
+GET _cat/nodes?h=ip,name,version&v=ture
 ```
 ### Step 6: 恢復 Shard 分配
 節點回來了，我們要告訴 Cluster 可以開始把 Shard 搬回這個新節點了。
