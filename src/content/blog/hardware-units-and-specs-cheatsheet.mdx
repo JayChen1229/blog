@@ -1,0 +1,96 @@
+---
+title: "SRE 的硬體通識課：MiB vs MB、Cat6 vs Cat5e、NVMe vs SAS 到底差在哪？"
+description: "為什麼 1TB 的硬碟插上去只剩 931GB？為什麼網速 100Mbps 下載速度只有 12MB/s？本文一次搞懂這些讓工程師混亂的單位換算與硬體規格。"
+pubDate: "2026-01-28"
+tags: ["Hardware", "Networking", "SRE", "Basics", "CheatSheet"]
+slug: "hardware-units-and-specs-cheatsheet"
+---
+
+## 1. 單位戰爭：行銷 vs 工程
+
+這是最混亂的地方，因為 **「賣硬體的人」** 和 **「寫作業系統的人」** 用的是不同的數學。
+
+### b (bit) vs B (Byte)
+這是網路與儲存的最大差異。
+* **b (bit, 位元)：** 資料的最小單位 (0 或 1)。**網路傳輸**通常用這個。
+* **B (Byte, 位元組)：** 1 Byte = 8 bits。**檔案儲存**通常用這個。
+
+> **SRE 換算口訣：**
+> 如果中華電信跟你說網速 **100 Mbps** (Megabits per sec)，
+> 你的實際下載速度極限是 `100 / 8` = **12.5 MB/s** (Megabytes per sec)。
+
+### 十進位 (SI) vs 二進位 (IEC)
+這是為什麼你的硬碟容量總是「縮水」的原因。
+
+| 單位 | 全名 | 定義 | 誰在用？ |
+| :--- | :--- | :--- | :--- |
+| **MB** | Megabyte | $1000^2$ ($10^6$) | 硬碟廠商、MacOS、網路頻寬 |
+| **MiB** | Mebibyte | $1024^2$ ($2^{20}$) | Windows、Linux (`free -m`)、記憶體 |
+
+**災難現場：**
+你買了一顆 **1TB (Terabyte)** 的硬碟，廠商意思是 $1,000,000,000,000$ Bytes。
+但你的 Linux 系統用 **TiB (Tebibyte)** 來算，$1,000,000,000,000 / 1024 / 1024 / 1024 / 1024 \approx$ **0.909 TiB**。
+所以你在 `df -h` 看到 **931G** 是正常的，硬碟沒壞。
+
+**Grafana 監控設定：**
+* 監控 **流量 (Throughput)** 時，Unit 請選 `bits/sec` (SI)。
+* 監控 **記憶體 (RAM)** 時，Unit 請選 `bytes (IEC)` (也就是 MiB/GiB)。
+
+---
+
+## 2. 網路線：不是能插進去就好
+
+在機房接線時，拿錯線會讓你的 10G Switch 瞬間降級成 1G，甚至一直 Flapping (瞬斷)。
+
+| 線材標準 | 頻寬極限 | 頻率 | 建議用途 | SRE 點評 |
+| :--- | :--- | :--- | :--- | :--- |
+| **Cat 5e** | 1 Gbps | 100 MHz | 一般辦公室、舊大樓 | 基本款，如果你跑 1G 都跑不滿，檢查是不是拿到了更古老的 Cat5。 |
+| **Cat 6** | 10 Gbps* | 250 MHz | **機櫃內短距離**、家用 | *註：10G 只能跑 55米以內。短距離 CP 值最高。 |
+| **Cat 6a** | **10 Gbps** | 500 MHz | **資料中心標準** | 支援完整的 100米 10G 傳輸。線比較粗、比較硬。 |
+| **Cat 7/8** | 40 Gbps+ | 高頻 | 特殊用途 | 通常資料中心跑 40G/100G 會直接改用 **光纖 (Fiber)** 或 **DAC (Direct Attach Copper)** 線，很少用這種網路線。 |
+
+**關鍵字：UTP vs STP**
+* **UTP (Unshielded)：** 無遮蔽，線比較軟，便宜。
+* **STP/FTP (Shielded)：** 有金屬遮蔽層，抗干擾。**機房強烈建議用這種**，因為電源線跟網路線通常都綁在一起，會有電磁干擾。
+
+
+
+---
+
+## 3. 硬碟介面：SATA, SAS, NVMe
+
+在規劃 Elasticsearch 或 Kafka 架構時，選錯硬碟介面是致命傷。
+
+### HDD (傳統硬碟) vs SSD (固態硬碟)
+* **HDD:** 便宜、容量大、慢。適合 **Cold/Warm Data**。
+* **SSD:** 貴、快。適合 **Hot Data**。
+
+但重點在於 **「介面 (Interface)」**，也就是資料走的「高速公路」。
+
+### 1. SATA (Serial ATA)
+* **極限：** ~600 MB/s (受限於 AHCI 協定)。
+* **場景：** 你的筆電、家用 PC、備份用的 Server。
+* **問題：** 就算你買了超快的 SSD，接在 SATA 上，速度就被鎖死在 600 MB/s。
+
+### 2. SAS (Serial Attached SCSI)
+* **極限：** 12 Gbps (~1500 MB/s)。
+* **場景：** **企業級儲存陣列**。
+* **特點：** 雖然速度不是最快，但極度穩定，支援雙埠 (Dual Port) 備援，一顆硬碟壞了可以無縫切換。銀行核心系統最愛。
+
+### 3. NVMe (Non-Volatile Memory express)
+* **極限：** 3500 MB/s ~ 7000 MB/s (PCIe 3.0/4.0)。
+* **本質：** 它不走 SATA 通道，它直接走 **PCIe 通道** 直通 CPU。
+* **場景：** **Elasticsearch Hot Node**、高效能資料庫。
+* **SRE 須知：** 處理高 IOPS (每秒讀寫次數) 需求時，**唯一的選擇就是 NVMe SSD**。不要拿 SATA SSD 來扛高併發。
+
+
+
+## 結論：規格決定架構
+
+下次當你覺得「系統好慢」時，先別急著改 Code，檢查一下底層：
+
+1.  **監控單位對了嗎？** 是看 Bits 還是 Bytes？
+2.  **線材對了嗎？** 跑 10G 用了 Cat5e 嗎？
+3.  **IO 瓶頸在哪？** 把高頻寫入的 Kafka 放在 SATA HDD 上了嗎？
+
+搞懂這些物理限制，軟體架構才能發揮真正的效能。
