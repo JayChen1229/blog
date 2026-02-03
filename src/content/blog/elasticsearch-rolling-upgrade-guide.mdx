@@ -104,8 +104,7 @@ PUT _cluster/settings
 
 監控 Recovery 進度：
 ```bash
-GET _cat/health?v
-GET _cat/recovery?v&active_only=true
+GET /_cluster/health
 ```
 **💡 黃燈 (Yellow) 警報：** 在升級初期，你可能會看到狀態卡在 `Yellow`。 _原因：_ 新版節點的 Shard 不能複製到舊版節點。如果你只升級了 1 台，那該台上面的 Primary Shard 就沒有地方放 Replica (因為其他台還是舊版)。 _解法：_ 只要確認 `init` (初始化中) 和 `relo` (搬遷中) 的數字是 0，就可以繼續升級下一台。等到第二台升級完，Replica 就會有地方去了。
 ### Step 8: 重複
